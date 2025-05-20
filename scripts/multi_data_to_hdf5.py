@@ -377,7 +377,7 @@ def get_arguments():
     parser.add_argument('--gripperEncoderNames', action='store', type=str, help='gripperEncoderNames',
                         default=['pika_l', 'pika_r'], required=False)
     parser.add_argument('--imu9AxisNames', action='store', type=str, help='imu9AxisNames',
-                        default=['pika_l', 'pika_r'], required=False)
+                        default=[], required=False)
     parser.add_argument('--lidarPointCloudNames', action='store', type=str, help='lidarPointCloudNames',
                         default=[], required=False)
     parser.add_argument('--robotBaseVelNames', action='store', type=str, help='robotBaseVelNames',

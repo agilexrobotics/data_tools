@@ -397,10 +397,10 @@ def get_arguments():
                         default=['/gripper/data'],
                         required=False)
     parser.add_argument('--imu_9axis_names', action='store', type=str, help='imu_9axis_names',
-                        default=['pika'],
+                        default=[],
                         required=False)
     parser.add_argument('--imu_9axis_topics', action='store', type=str, help='imu_9axis_topics',
-                        default=['/imu/data'],
+                        default=[],
                         required=False)
     parser.add_argument('--lidar_point_cloud_names', action='store', type=str, help='lidar_point_cloud_names',
                         default=[],

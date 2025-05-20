@@ -40,8 +40,8 @@ dataInfo:
 
   imu:
     9axis:
-      names: ['pika']
-      topics: ['/imu/data']
+      names: []
+      topics: []
 
   lidar:
     pointCloud:
