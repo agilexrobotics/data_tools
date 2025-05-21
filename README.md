@@ -204,11 +204,11 @@ By default, color, depth, and pointcloud in HDF5 use file indexing, so the origi
 ```shell
 source ~/{YOUR_WS}/devel/setup.sh
 # aloha
-python3 aloha_data_to_hdf5.py --datasetDir {data_path} --useIndex "" --datasetTargetDir {hdf5_saving_path}
+python3 aloha_data_to_hdf5.py --datasetDir {data_path} --useIndex "" --useCameraPointCloud "" --datasetTargetDir {hdf5_saving_path}
 # single pika
-python3 pika_data_to_hdf5.py --datasetDir {data_path} --useIndex "" --datasetTargetDir {hdf5_saving_path}
+python3 pika_data_to_hdf5.py --datasetDir {data_path} --useIndex "" --useCameraPointCloud "" --datasetTargetDir {hdf5_saving_path}
 # double pika
-python3 multi_data_to_hdf5.py --datasetDir {data_path} --useIndex "" --datasetTargetDir {hdf5_saving_path}
+python3 multi_data_to_hdf5.py --datasetDir {data_path} --useIndex "" --useCameraPointCloud "" --datasetTargetDir {hdf5_saving_path}
 ```
 ## How to publish data
 use original data
