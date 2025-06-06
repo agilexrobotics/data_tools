@@ -46,11 +46,15 @@ Run the data collection code.
 ```bash
 source ~/{YOUR_WS}/devel/setup.sh
 # aloha
-roslaunch data_tools run_aloha_data_capture.launch datasetDir:={data_path} episodeIndex:=0
+roslaunch data_tools run_data_capture.launch type:=aloha datasetDir:={data_path} episodeIndex:=0
 # single pika
-roslaunch data_tools run_data_capture.launch datasetDir:={data_path} episodeIndex:=0
+roslaunch data_tools run_data_capture.launch type:=single_pika datasetDir:={data_path} episodeIndex:=0
 # double pika
-roslaunch data_tools run_multi_data_capture.launch datasetDir:={data_path} episodeIndex:=0
+roslaunch data_tools run_data_capture.launch type:=multi_pika datasetDir:={data_path} episodeIndex:=0
+# single pika teleop
+roslaunch data_tools run_data_capture.launch type:=single_pika_teleop datasetDir:={data_path} episodeIndex:=0
+# double pika teleop
+roslaunch data_tools run_data_capture.launch type:=multi_pika_teleop datasetDir:={data_path} episodeIndex:=0
 ```
 If successful, the following status will be displayed.
 
@@ -156,24 +160,32 @@ episode0
 ```shell
 source ~/{YOUR_WS}/devel/setup.sh
 # aloha
-roslaunch data_tools run_aloha_data_sync.launch datasetDir:={data_path}
+roslaunch data_tools run_data_sync.launch type:=aloha datasetDir:={data_path}
 # single pika
-roslaunch data_tools run_data_sync.launch datasetDir:={data_path}
+roslaunch data_tools run_data_sync.launch type:=single_pika datasetDir:={data_path} 
 # double pika
-roslaunch data_tools run_multi_data_sync.launch datasetDir:={data_path}
+roslaunch data_tools run_data_sync.launch type:=multi_pika datasetDir:={data_path}
+# single pika teleop
+roslaunch data_tools run_data_sync.launch type:=single_pika_teleop datasetDir:={data_path}
+# double pika teleop
+roslaunch data_tools run_data_sync.launch type:=multi_pika_teleop datasetDir:={data_path}
 ```
 
-After execution, a `sync.txt` file will be generated in the path of each specific dataset. For example, the image data synchronization index file path: `task0/episode0/camera/color/left/sync.txt`.
+After execution, a `sync.txt` file will be generated in the path of each specific dataset. For example, the image data synchronization index file path: `{data_path}/episode0/camera/color/left/sync.txt`.
 
 ## create point cloud(optional)
 ```shell
 source ~/{YOUR_WS}/devel/setup.sh
 # aloha
-python3 aloha_camera_point_cloud_filter.py --datasetDir {data_path}
+python3 camera_point_cloud_filter.py --type aloha --datasetDir {data_path}
 # single pika
-python3 camera_point_cloud_filter.py --datasetDir {data_path}
+python3 camera_point_cloud_filter.py --type single_pika --datasetDir {data_path}
 # double pika
-python3 multi_camera_point_cloud_filter.py --datasetDir {data_path}
+python3 camera_point_cloud_filter.py --type multi_pika --datasetDir {data_path}
+# single pika teleop
+python3 camera_point_cloud_filter.py --type single_pika_teleop --datasetDir {data_path}
+# double pika teleop
+python3 camera_point_cloud_filter.py --type multi_pika_teleop --datasetDir {data_path}
 ```
 
 ## Convert raw data to HDF5 format
@@ -184,52 +196,73 @@ use point cloud
 ```shell
 source ~/{YOUR_WS}/devel/setup.sh
 # aloha
-python3 aloha_data_to_hdf5.py --datasetDir {data_path} --useCameraPointCloud true
+python3 data_to_hdf5.py --type aloha --useCameraPointCloud true --datasetDir {data_path}
 # single pika
-python3 pika_data_to_hdf5.py --datasetDir {data_path} --useCameraPointCloud true
+python3 data_to_hdf5.py --type single_pika --useCameraPointCloud true --datasetDir {data_path}
 # double pika
-python3 multi_data_to_hdf5.py --datasetDir {data_path} --useCameraPointCloud true
+python3 data_to_hdf5.py --type multi_pika --useCameraPointCloud true --datasetDir {data_path}
+# single pika teleop
+python3 data_to_hdf5.py --type single_pika_teleop --useCameraPointCloud true --datasetDir {data_path}
+# double pika teleop
+python3 data_to_hdf5.py --type multi_pika_teleop --useCameraPointCloud true --datasetDir {data_path}
 ```
 not use point cloud
 ```shell
 source ~/{YOUR_WS}/devel/setup.sh
 # aloha
-python3 aloha_data_to_hdf5.py --datasetDir {data_path} --useCameraPointCloud ""
+python3 data_to_hdf5.py --type aloha --useCameraPointCloud "" --datasetDir {data_path}
 # single pika
-python3 pika_data_to_hdf5.py --datasetDir {data_path} --useCameraPointCloud ""
+python3 data_to_hdf5.py --type single_pika --useCameraPointCloud "" --datasetDir {data_path}
 # double pika
-python3 multi_data_to_hdf5.py --datasetDir {data_path} --useCameraPointCloud ""
+python3 data_to_hdf5.py --type multi_pika --useCameraPointCloud "" --datasetDir {data_path}
+# single pika teleop
+python3 data_to_hdf5.py --type single_pika_teleop --useCameraPointCloud "" --datasetDir {data_path}
+# double pika teleop
+python3 data_to_hdf5.py --type multi_pika_teleop --useCameraPointCloud "" --datasetDir {data_path}
 ```
 By default, color, depth, and pointcloud in HDF5 use file indexing, so the original data files still need to be preserved. If you do not want to use indexes, you can use the following command:
 ```shell
 source ~/{YOUR_WS}/devel/setup.sh
 # aloha
-python3 aloha_data_to_hdf5.py --datasetDir {data_path} --useIndex "" --datasetTargetDir {hdf5_saving_path}
+python3 data_to_hdf5.py --type aloha --useCameraPointCloud "" --datasetDir {data_path} --useIndex "" --datasetTargetDir {hdf5_saving_path}
 # single pika
-python3 pika_data_to_hdf5.py --datasetDir {data_path} --useIndex "" --datasetTargetDir {hdf5_saving_path}
+python3 data_to_hdf5.py --type single_pika --useCameraPointCloud "" --datasetDir {data_path} --useIndex "" --datasetTargetDir {hdf5_saving_path}
 # double pika
-python3 multi_data_to_hdf5.py --datasetDir {data_path} --useIndex "" --datasetTargetDir {hdf5_saving_path}
+python3 data_to_hdf5.py --type multi_pika --useCameraPointCloud "" --datasetDir {data_path} --useIndex "" --datasetTargetDir {hdf5_saving_path}
+# single pika teleop
+python3 data_to_hdf5.py --type single_pika_teleop --useCameraPointCloud "" --datasetDir {data_path} --useIndex "" --datasetTargetDir {hdf5_saving_path}
+# double pika teleop
+python3 data_to_hdf5.py --type multi_pika_teleop --useCameraPointCloud "" --datasetDir {data_path} --useIndex "" --datasetTargetDir {hdf5_saving_path}
 ```
+{hdf5_saving_path} is the path where saving your hdf5.
 ## How to publish data
 use original data
 ```shell
 source ~/{YOUR_WS}/devel/setup.sh
 # aloha
-roslaunch data_tools run_aloha_data_publish.launch datasetDir:={data_path} episodeIndex:=0
+roslaunch data_tools run_data_publish.launch type:=aloha datasetDir:={data_path} episodeIndex:=0
 # single pika
-roslaunch data_tools run_data_publish.launch datasetDir:={data_path} episodeIndex:=0
+roslaunch data_tools run_data_publish.launch type:=single_pika datasetDir:={data_path} episodeIndex:=0
 # double pika
-roslaunch data_tools run_multi_data_publish.launch datasetDir:={data_path} episodeIndex:=0
+roslaunch data_tools run_data_publish.launch type:=multi_pika datasetDir:={data_path} episodeIndex:=0
+# single pika teleop
+roslaunch data_tools run_data_publish.launch type:=single_pika_teleop datasetDir:={data_path} episodeIndex:=0
+# double pika teleop
+roslaunch data_tools run_data_publish.launch type:=multi_pika_teleop datasetDir:={data_path} episodeIndex:=0
 ```
 use hdf5 data
 ```shell
 source ~/{YOUR_WS}/devel/setup.sh
 # aloha
-python3 aloha_data_publish.py --datasetDir {data_path} --episodeIndex 0
+python3 data_publish.py --type aloha --datasetDir {data_path} --episodeIndex 0
 # single pika
-python3 data_publish.py --datasetDir {data_path} --episodeIndex 0
+python3 data_publish.py --type single_pika --datasetDir {data_path} --episodeIndex 0
 # double pika
-python3 multi_data_publish.py --datasetDir {data_path} --episodeIndex 0
+python3 data_publish.py --type multi_pika --datasetDir {data_path} --episodeIndex 0
+# single pika teleop
+python3 data_publish.py --type single_pika --datasetDir {data_path} --episodeIndex 0
+# double pika teleop
+python3 data_publish.py --type multi_pika --datasetDir {data_path} --episodeIndex 0
 ```
 ## How to load data from an HDF5 file for training
 
@@ -262,6 +295,12 @@ example:
       topics: []  # `geometry_msgs::PoseStamped` topic 
       orients: []  # use quaternions, default true, set false when `geometry_msgs::PoseStamped` orient x y z is roll pitch yaw.
 
+if your config file name is xxx_data_params.yaml, 
+set:
+```
+python: --type xxx
+roslaunch: type:=xxx
+```
 
 Ensure that all configured sensors are online and above 25Hz, otherwise data collection and synchronization will fail.
 
