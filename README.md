@@ -35,8 +35,8 @@ Download our source code, and place this package and libsurvive in the workspace
 
 ```shell
 cd {YOUR_WS}
-git clone https://gitee.com/LunKai/data_tools.git
-git clone https://gitee.com/LunKai/data_msgs.git
+git clone https://github.com/agilexrobotics/data_tools.git
+git clone https://github.com/agilexrobotics/data_msgs.git
 catkin_make
 ```
 ## Run
