@@ -12,6 +12,7 @@ import argparse
 import json
 import cv2
 from scipy.spatial.transform import Rotation as R
+import yaml
 
 
 def matrix_to_xyzrpy(matrix):
@@ -358,12 +359,14 @@ def get_arguments():
                         default="/home/agilex/data", required=False)
     parser.add_argument('--useIndex', action='store', type=bool, help='useIndex',
                         default=True, required=False)
+    parser.add_argument('--type', action='store', type=str, help='type',
+                        default="aloha", required=False)
     parser.add_argument('--cameraColorNames', action='store', type=str, help='cameraColorNames',
-                        default=['pikaDepthCamera', 'pikaFisheyeCamera'], required=False)
+                        default=[], required=False)
     parser.add_argument('--cameraDepthNames', action='store', type=str, help='cameraDepthNames',
-                        default=['pikaDepthCamera'], required=False)
+                        default=[], required=False)
     parser.add_argument('--cameraPointCloudNames', action='store', type=str, help='cameraPointCloudNames',
-                        default=['pikaDepthCamera'], required=False)
+                        default=[], required=False)
     parser.add_argument('--useCameraPointCloud', action='store', type=bool, help='useCameraPointCloud',
                         default=False, required=False)
     parser.add_argument('--useCameraPointCloudNormalization', action='store', type=bool, help='useCameraPointCloudNormalization',
@@ -373,9 +376,9 @@ def get_arguments():
     parser.add_argument('--armEndPoseNames', action='store', type=str, help='armEndPoseNames',
                         default=[], required=False)
     parser.add_argument('--localizationPoseNames', action='store', type=str, help='localizationPoseNames',
-                        default=['pika'], required=False)
+                        default=[], required=False)
     parser.add_argument('--gripperEncoderNames', action='store', type=str, help='gripperEncoderNames',
-                        default=['pika'], required=False)
+                        default=[], required=False)
     parser.add_argument('--imu9AxisNames', action='store', type=str, help='imu9AxisNames',
                         default=[], required=False)
     parser.add_argument('--lidarPointCloudNames', action='store', type=str, help='lidarPointCloudNames',
@@ -385,6 +388,21 @@ def get_arguments():
     parser.add_argument('--liftMotorNames', action='store', type=str, help='liftMotorNames',
                         default=[], required=False)
     args = parser.parse_args()
+
+    with open(f'../config/{args.type}_data_params.yaml', 'r') as file:
+        yaml_data = yaml.safe_load(file)
+        args.cameraColorNames = yaml_data['dataInfo']['camera']['color']['names']
+        args.cameraDepthNames = yaml_data['dataInfo']['camera']['depth']['names']
+        args.cameraPointCloudNames = yaml_data['dataInfo']['camera']['pointCloud']['names']
+        args.armJointStateNames = yaml_data['dataInfo']['arm']['jointState']['names']
+        args.armEndPoseNames = yaml_data['dataInfo']['arm']['endPose']['names']
+        args.localizationPoseNames = yaml_data['dataInfo']['localization']['pose']['names']
+        args.gripperEncoderNames = yaml_data['dataInfo']['gripper']['encoder']['names']
+        args.imu9AxisNames = yaml_data['dataInfo']['imu']['9axis']['names']
+        args.lidarPointCloudNames = yaml_data['dataInfo']['lidar']['pointCloud']['names']
+        args.robotBaseVelNames = yaml_data['dataInfo']['robotBase']['vel']['names']
+        args.liftMotorNames = yaml_data['dataInfo']['lift']['motor']['names']
+
     return args
 
 

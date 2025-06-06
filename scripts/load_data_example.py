@@ -74,8 +74,8 @@ class EpisodicDataset(torch.utils.data.Dataset):
                 qpos = np.concatenate((root['/localization/pose/pika_l'][()], root['/localization/pose/pika_r'][()]), axis=-1)[start_index]
                 action = np.concatenate((root['/localization/pose/pika_l'][()], root['/localization/pose/pika_r'][()]), axis=-1)[start_index]
             elif '/arm/jointStatePosition/masterLeft' in root.keys():
-                qpos = np.concatenate((root['/arm/jointStatePosition/masterLeft'][()], root['/arm/jointStatePosition/masterRight'][()]), axis=-1)[start_index]
-                action = np.concatenate((root['/arm/jointStatePosition/puppetLeft'][()], root['/arm/jointStatePosition/puppetRight'][()]), axis=-1)[start_index]
+                action = np.concatenate((root['/arm/jointStatePosition/masterLeft'][()], root['/arm/jointStatePosition/masterRight'][()]), axis=-1)[start_index]
+                qpos = np.concatenate((root['/arm/jointStatePosition/puppetLeft'][()], root['/arm/jointStatePosition/puppetRight'][()]), axis=-1)[start_index]
             # qpos = torch.from_numpy(qpos[start_index]).float()
             # action = torch.from_numpy(action[start_index]).float()
             # root['/arm/endPose/puppetLeft'][()]  根据需要获取

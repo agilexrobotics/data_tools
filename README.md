@@ -35,8 +35,8 @@ Download our source code, and place this package and libsurvive in the workspace
 
 ```shell
 cd {YOUR_WS}
-git clone https://github.com/agilexrobotics/data_tools.git
-git clone https://github.com/agilexrobotics/data_msgs.git
+git clone https://gitee.com/LunKai/data_tools.git
+git clone https://gitee.com/LunKai/data_msgs.git
 catkin_make
 ```
 ## Run
@@ -204,11 +204,11 @@ By default, color, depth, and pointcloud in HDF5 use file indexing, so the origi
 ```shell
 source ~/{YOUR_WS}/devel/setup.sh
 # aloha
-python3 aloha_data_to_hdf5.py --datasetDir {data_path} --useIndex "" --useCameraPointCloud "" --datasetTargetDir {hdf5_saving_path}
+python3 aloha_data_to_hdf5.py --datasetDir {data_path} --useIndex "" --datasetTargetDir {hdf5_saving_path}
 # single pika
-python3 pika_data_to_hdf5.py --datasetDir {data_path} --useIndex "" --useCameraPointCloud "" --datasetTargetDir {hdf5_saving_path}
+python3 pika_data_to_hdf5.py --datasetDir {data_path} --useIndex "" --datasetTargetDir {hdf5_saving_path}
 # double pika
-python3 multi_data_to_hdf5.py --datasetDir {data_path} --useIndex "" --useCameraPointCloud "" --datasetTargetDir {hdf5_saving_path}
+python3 multi_data_to_hdf5.py --datasetDir {data_path} --useIndex "" --datasetTargetDir {hdf5_saving_path}
 ```
 ## How to publish data
 use original data

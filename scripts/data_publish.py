@@ -31,6 +31,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from tf.transformations import quaternion_from_euler
 import pcl
 import ros_numpy
+import yaml
 USELIFT = False
 if USELIFT:
     from bt_task_msgs.msg import LiftMotorMsg
@@ -236,13 +237,22 @@ class RosOperator:
             self.lift_motor_publishers = [rospy.Publisher(topic, LiftMotorMsg, queue_size=10) for topic in self.args.lift_motor_topics]
 
     def publish_camera_color(self, index, color):
-        self.camera_color_publishers[index].publish(self.bridge.cv2_to_imgmsg(color, "bgr8"))
+        msg = self.bridge.cv2_to_imgmsg(color, "bgr8")
+        msg.header = Header()
+        msg.header.stamp = rospy.Time.now()
+        self.camera_color_publishers[index].publish(msg)
 
     def publish_camera_depth(self, index, depth):
-        self.camera_depth_publishers[index].publish(self.bridge.cv2_to_imgmsg(depth, "16UC1"))
+        msg = self.bridge.cv2_to_imgmsg(depth, "16UC1")
+        msg.header = Header()
+        msg.header.stamp = rospy.Time.now()
+        self.camera_depth_publishers[index].publish(msg)
 
     def publish_camera_point_cloud(self, index, point_cloud):
-        self.camera_point_cloud_publishers[index].publish(pcd_to_msg(point_cloud))
+        msg = pcd_to_msg(point_cloud)
+        msg.header = Header()
+        msg.header.stamp = rospy.Time.now()
+        self.camera_point_cloud_publishers[index].publish(msg)
 
     def publish_arm_joint_state(self, index, joint_state):
         joint_state_msg = JointState()
@@ -350,24 +360,26 @@ def get_arguments():
                         default=0, required=False)
     parser.add_argument('--publishIndex', action='store', type=int, help='publishIndex',
                         default=-1, required=False)
+    parser.add_argument('--type', action='store', type=str, help='type',
+                        default="aloha", required=False)
 
     parser.add_argument('--camera_color_names', action='store', type=str, help='camera_color_names',
-                        default=['pikaDepthCamera', 'pikaFisheyeCamera'],
+                        default=[],
                         required=False)
     parser.add_argument('--camera_color_topics', action='store', type=str, help='camera_color_topics',
-                        default=['/camera/color/image_raw', '/camera_fisheye/color/image_raw'],
+                        default=[],
                         required=False)
     parser.add_argument('--camera_depth_names', action='store', type=str, help='camera_depth_names',
-                        default=['pikaDepthCamera'],
+                        default=[],
                         required=False)
     parser.add_argument('--camera_depth_topics', action='store', type=str, help='camera_depth_topics',
-                        default=['/camera/aligned_depth_to_color/image_raw'],
+                        default=[],
                         required=False)
     parser.add_argument('--camera_point_cloud_names', action='store', type=str, help='camera_point_cloud_names',
-                        default=['pikaDepthCamera'],
+                        default=[],
                         required=False)
     parser.add_argument('--camera_point_cloud_topics', action='store', type=str, help='camera_point_cloud_topics',
-                        default=['/camera/depth/color/points'],
+                        default=[],
                         required=False)
     parser.add_argument('--arm_joint_state_names', action='store', type=str, help='arm_joint_state_names',
                         default=[],
@@ -385,16 +397,16 @@ def get_arguments():
                         default=[],
                         required=False)
     parser.add_argument('--localization_pose_names', action='store', type=str, help='localization_pose_names',
-                        default=['pika'],
+                        default=[],
                         required=False)
     parser.add_argument('--localization_pose_topics', action='store', type=str, help='localization_pose_topics',
-                        default=['/pika_pose'],
+                        default=[],
                         required=False)
     parser.add_argument('--gripper_encoder_names', action='store', type=str, help='gripper_encoder_names',
-                        default=['pika'],
+                        default=[],
                         required=False)
     parser.add_argument('--gripper_encoder_topics', action='store', type=str, help='gripper_encoder_topics',
-                        default=['/gripper/data'],
+                        default=[],
                         required=False)
     parser.add_argument('--imu_9axis_names', action='store', type=str, help='imu_9axis_names',
                         default=[],
@@ -423,6 +435,33 @@ def get_arguments():
     parser.add_argument('--publish_rate', action='store', type=int, help='publish_rate',
                         default=30, required=False)
     args = parser.parse_args()
+
+    with open(f'../config/{args.type}_data_params.yaml', 'r') as file:
+        yaml_data = yaml.safe_load(file)
+        args.camera_color_names = yaml_data['dataInfo']['camera']['color']['names']
+        args.camera_color_topics = yaml_data['dataInfo']['camera']['color']['topics']
+        args.camera_depth_names = yaml_data['dataInfo']['camera']['depth']['names']
+        args.camera_depth_topics = yaml_data['dataInfo']['camera']['depth']['topics']
+        args.camera_point_cloud_names = yaml_data['dataInfo']['camera']['pointCloud']['names']
+        args.camera_point_cloud_topics = yaml_data['dataInfo']['camera']['pointCloud']['topics']
+        args.arm_joint_state_names = yaml_data['dataInfo']['arm']['jointState']['names']
+        args.arm_joint_state_topics = yaml_data['dataInfo']['arm']['jointState']['topics']
+        args.arm_end_pose_names = yaml_data['dataInfo']['arm']['endPose']['names']
+        args.arm_end_pose_topics = yaml_data['dataInfo']['arm']['endPose']['topics']
+        args.arm_end_pose_orients = yaml_data['dataInfo']['arm']['endPose']['orients']
+        args.localization_pose_names = yaml_data['dataInfo']['localization']['pose']['names']
+        args.localization_pose_topics = yaml_data['dataInfo']['localization']['pose']['topics']
+        args.gripper_encoder_names = yaml_data['dataInfo']['gripper']['encoder']['names']
+        args.gripper_encoder_topics = yaml_data['dataInfo']['gripper']['encoder']['topics']
+        args.imu_9axis_names = yaml_data['dataInfo']['imu']['9axis']['names']
+        args.imu_9axis_topics = yaml_data['dataInfo']['imu']['9axis']['topics']
+        args.lidar_point_cloud_names = yaml_data['dataInfo']['lidar']['pointCloud']['names']
+        args.lidar_point_cloud_topics = yaml_data['dataInfo']['lidar']['pointCloud']['topics']
+        args.robot_base_vel_names = yaml_data['dataInfo']['robotBase']['vel']['names']
+        args.robot_base_vel_topics = yaml_data['dataInfo']['robotBase']['vel']['topics']
+        args.lift_motor_names = yaml_data['dataInfo']['lift']['motor']['names']
+        args.lift_motor_topics = yaml_data['dataInfo']['lift']['motor']['topics']
+
     return args
 
 

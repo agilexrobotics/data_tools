@@ -8,11 +8,9 @@
 
     <arg name="episodeIndex" default="-1"/>
     <arg name="datasetDir" default="/home/agilex/data"/>
-    <arg name="timeDiffLimit" default="0.03"/>
     <param name="episodeIndex" value="$(arg episodeIndex)"/>
     <param name="datasetDir" value="$(arg datasetDir)"/>
-    <param name="timeDiffLimit" value="$(arg timeDiffLimit)"/>
 
-    <node pkg="$(arg project)" type="$(arg project)_dataSync" name="$(arg project)_dataSync" output="screen" required="true"/>
+    <node pkg="$(arg project)" type="$(arg project)_pointCloudFilter" name="$(arg project)_pointCloudFilter" output="screen" required="true"/>
 
 </launch>

@@ -31,7 +31,7 @@ dataInfo:
   localization:
     pose:
       names: ['pika_l', 'pika_r']
-      topics: ['/left_pika_pose', '/right_pika_pose']
+      topics: ['/pika_pose_l', '/pika_pose_r']
 
   gripper:
     encoder:

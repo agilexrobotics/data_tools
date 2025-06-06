@@ -1,9 +1,10 @@
 <launch>
 
     <arg name="project" default="data_tools"/>
+    <arg name="type" default="aloha"/>
     
     <!-- Parameters -->
-    <rosparam file="$(find data_tools)/config/data_params.yaml" command="load" />
+    <rosparam file="$(find data_tools)/config/$(arg type)_data_params.yaml" command="load" />
 
     <arg name="episodeIndex" default="0"/>
     <arg name="datasetDir" default="/home/agilex/data"/>

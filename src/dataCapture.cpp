@@ -1681,6 +1681,7 @@ public:
                 captureStatus.count_in_seconds.push_back(countInSecond);
                 captureStatus.frequencies.push_back(frequency);
             }
+            captureStatus.quit = false;
             pubCaptureStatus.publish(captureStatus);
             std::cout<<"sum total frame: "<<allCount<<std::endl;
             std::cout<<std::endl;
@@ -1727,8 +1728,11 @@ public:
             if(captureStopMtx.try_lock()){
                 bool stop = captureStop;
                 captureStopMtx.unlock();
-                if(stop)
+                if(stop){
+                    captureStatus.quit = true;
+                    pubCaptureStatus.publish(captureStatus);
                     break;
+                }
             }
             if(captureStatus.fail)
                 break;
