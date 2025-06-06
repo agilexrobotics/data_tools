@@ -23,10 +23,6 @@ These are ARIO dataset tools. Data collection, data saving, and data publishing 
 [![rapidyaml](https://img.shields.io/badge/rapidyaml-v0.5.0-blue.svg)](https://github.com/biojppm/rapidyaml/tree/b35ccb150282760cf5c2d316895cb86bd161ac89)
 [![rapidjson](https://img.shields.io/badge/rapidjson-v1.1.0-blue.svg)](https://github.com/Tencent/rapidjson/tree/f54b0e47a08782a6131cc3d60f94d038fa6e0a51)
 
-## Hardware support list
-
-Tested successfully on Agilex [Cobot Magic](https://github.com/agilexrobotics/cobot_magic) robot.
-
 ## Installation
 
 Download our source code, and place this package and libsurvive in the workspace {YOUR_WS}/src.
