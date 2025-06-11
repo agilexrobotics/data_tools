@@ -80,7 +80,7 @@ public:
 
     double timeDiffLimit;
 
-    DataSync(std::string datasetDir, int episodeIndex, double timeDiffLimit): DataUtility(datasetDir, episodeIndex) {
+    DataSync(std::string name, const rclcpp::NodeOptions & options, std::string datasetDir, int episodeIndex, double timeDiffLimit): DataUtility(name, options, datasetDir, episodeIndex) {
         this->timeDiffLimit = timeDiffLimit;
         cameraColorDataTimeSeries = std::vector<std::vector<TimeSeries>>(cameraColorNames.size());
         cameraDepthDataTimeSeries = std::vector<std::vector<TimeSeries>>(cameraDepthNames.size());
@@ -666,33 +666,66 @@ public:
 };
 
 
-int main(int argc, char** argv)
-{
-    ros::init(argc, argv, "data_sync");
-    ros::NodeHandle nh;
+class DataSyncService: public rclcpp::Node{
+    public:
+    rclcpp::executors::SingleThreadedExecutor *exec;
+    std::shared_ptr<DataSync> dataSync;
+    bool useService;
     std::string datasetDir;
     int episodeIndex;
+    rclcpp::NodeOptions options;
+    std::string name;
     double timeDiffLimit;
-    nh.param<std::string>("datasetDir", datasetDir, "/home/agilex/data");
-    nh.param<int>("episodeIndex", episodeIndex, 0);
-    nh.param<double>("timeDiffLimit", timeDiffLimit, 0.1);
-    ROS_INFO("\033[1;32m----> data sync Started.\033[0m");
-    if(episodeIndex == -1){
-        for (const auto& entry : boost::filesystem::directory_iterator(datasetDir)) {
-            const auto& path = entry.path();
-            std::string fileName = path.stem().string();
-            if(fileName.substr(0, 7) == "episode" && fileName.substr(fileName.length() - 7, 7) != ".tar.gz"){
-                std::cout<<fileName<<" processing"<<std::endl;
-                fileName.replace(0, 7, "");
-                DataSync dataSync(datasetDir, std::stoi(fileName), timeDiffLimit);
-                dataSync.sync();
-                std::cout<<fileName<<" done"<<std::endl;
+    DataSyncService(std::string name, const rclcpp::NodeOptions & options): rclcpp::Node(name, options) {
+        exec = nullptr;
+        this->options = options;
+        this->name = name;
+        declare_parameter("datasetDir", "/home/agilex/data");get_parameter("datasetDir", datasetDir);
+        declare_parameter("episodeIndex", 0);get_parameter("episodeIndex", episodeIndex);
+        declare_parameter("timeDiffLimit", 0.1);get_parameter("timeDiffLimit", timeDiffLimit);
+        if(episodeIndex == -1){
+            for (const auto& entry : boost::filesystem::directory_iterator(datasetDir)) {
+                const auto& path = entry.path();
+                std::string fileName = path.stem().string();
+                if(fileName.substr(0, 7) == "episode" && fileName.substr(fileName.length() - 7, 7) != ".tar.gz"){
+                    std::cout<<fileName<<" processing"<<std::endl;
+                    fileName.replace(0, 7, "");
+                    exec = new rclcpp::executors::SingleThreadedExecutor;
+                    dataSync = std::make_shared<DataSync>(name, options, datasetDir, std::stoi(fileName), timeDiffLimit);
+                    exec->add_node(dataSync);
+                    ((DataSync *)dataSync.get())->sync();
+                    delete exec;
+                    exec = nullptr;
+                    std::cout<<fileName<<" done"<<std::endl;
+                }
             }
+            rclcpp::shutdown();
+            std::cout<<"Done"<<std::endl;
+        }else{
+            exec = new rclcpp::executors::SingleThreadedExecutor;
+            dataSync = std::make_shared<DataSync>(name, options, datasetDir, episodeIndex, timeDiffLimit);
+            exec->add_node(dataSync);
+            ((DataSync *)dataSync.get())->sync();
+            rclcpp::shutdown();
+            std::cout<<"Done"<<std::endl;
         }
-    }else{
-        DataSync dataSync(datasetDir, episodeIndex, timeDiffLimit);
-        dataSync.sync();
     }
+};
+
+
+
+
+int main(int argc, char** argv)
+{
+    rclcpp::init(argc, argv);
+    rclcpp::NodeOptions options;
+    options.use_intra_process_comms(true);
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "\033[1;32m----> data sync Started.\033[0m");
+    rclcpp::executors::SingleThreadedExecutor exec;
+    auto dataSyncService = std::make_shared<DataSyncService>("data_sync", options);
+    exec.add_node(dataSyncService);
+    exec.spin();
+    rclcpp::shutdown();
     std::cout<<"Done"<<std::endl;
     return 0;
 }

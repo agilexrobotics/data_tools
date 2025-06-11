@@ -1,28 +1,22 @@
 #pragma once
 #ifndef _DATA_UTILITY_H_
 #define _DATA_UTILITY_H_
-
-#include <ros/ros.h>
-#include <std_msgs/Header.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/JointState.h>
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/CameraInfo.h>
-#include <nav_msgs/Odometry.h>
-#include <geometry_msgs/PoseStamped.h>
+#include <rclcpp/rclcpp.hpp>
+#include <std_msgs/msg/header.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
+#include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/camera_info.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <deque>
-#ifdef _USENOETIC
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
-#else
-#include <opencv/cv.h>
-#endif
+#include <sensor_msgs/image_encodings.hpp>
 
-class DataUtility
+class DataUtility: public rclcpp::Node
 {
 public:
-
-    ros::NodeHandle nh;
 
     std::vector<std::string> cameraColorNames;
     std::vector<std::string> cameraDepthNames;
@@ -139,16 +133,16 @@ public:
     std::vector<bool> liftMotorToPublishs;
     std::vector<bool> tfTransformToPublishs;
 
-    std::vector<float> cameraPointCloudMaxDistances;
-    std::vector<float> cameraPointCloudDownSizes;
+    std::vector<double> cameraPointCloudMaxDistances;
+    std::vector<double> cameraPointCloudDownSizes;
 
-    std::vector<float> lidarPointCloudXDistanceUppers;
-    std::vector<float> lidarPointCloudXDistancelowers;
-    std::vector<float> lidarPointCloudYDistanceUppers;
-    std::vector<float> lidarPointCloudYDistancelowers;
-    std::vector<float> lidarPointCloudZDistanceUppers;
-    std::vector<float> lidarPointCloudZDistancelowers;
-    std::vector<float> lidarPointCloudDownSizes;
+    std::vector<double> lidarPointCloudXDistanceUppers;
+    std::vector<double> lidarPointCloudXDistancelowers;
+    std::vector<double> lidarPointCloudYDistanceUppers;
+    std::vector<double> lidarPointCloudYDistancelowers;
+    std::vector<double> lidarPointCloudZDistanceUppers;
+    std::vector<double> lidarPointCloudZDistancelowers;
+    std::vector<double> lidarPointCloudDownSizes;
 
     std::vector<bool> armEndPoseOrients;
 
@@ -191,58 +185,58 @@ public:
 
     std::string tfTransformDir;
 
-    DataUtility(std::string datasetDirParam, int episodeIndexParam)
+    DataUtility(std::string name, const rclcpp::NodeOptions & options, std::string datasetDirParam, int episodeIndexParam): rclcpp::Node(name, options) 
     {
-        nh.param<std::vector<std::string>>("dataInfo/camera/color/names", cameraColorNames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/camera/depth/names", cameraDepthNames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/camera/pointCloud/names", cameraPointCloudNames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/arm/jointState/names", armJointStateNames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/arm/endPose/names", armEndPoseNames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/localization/pose/names", localizationPoseNames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/gripper/encoder/names", gripperEncoderNames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/imu/9axis/names", imu9AxisNames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/lidar/pointCloud/names", lidarPointCloudNames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/robotBase/vel/names", robotBaseVelNames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/lift/motor/names", liftMotorNames, std::vector<std::string>());
+        declare_parameter("dataInfo.camera.color.names", std::vector<std::string>());get_parameter("dataInfo.camera.color.names", cameraColorNames);
+        declare_parameter("dataInfo.camera.depth.names", std::vector<std::string>());get_parameter("dataInfo.camera.depth.names", cameraDepthNames);
+        declare_parameter("dataInfo.camera.pointCloud.names", std::vector<std::string>());get_parameter("dataInfo.camera.pointCloud.names", cameraPointCloudNames);
+        declare_parameter("dataInfo.arm.jointState.names", std::vector<std::string>());get_parameter("dataInfo.arm.jointState.names", armJointStateNames);
+        declare_parameter("dataInfo.arm.endPose.names", std::vector<std::string>());get_parameter("dataInfo.arm.endPose.names", armEndPoseNames);
+        declare_parameter("dataInfo.localization.pose.names", std::vector<std::string>());get_parameter("dataInfo.localization.pose.names", localizationPoseNames);
+        declare_parameter("dataInfo.gripper.encoder.names", std::vector<std::string>());get_parameter("dataInfo.gripper.encoder.names", gripperEncoderNames);
+        declare_parameter("dataInfo.imu.9axis.names", std::vector<std::string>());get_parameter("dataInfo.imu.9axis.names", imu9AxisNames);
+        declare_parameter("dataInfo.lidar.pointCloud.names", std::vector<std::string>());get_parameter("dataInfo.lidar.pointCloud.names", lidarPointCloudNames);
+        declare_parameter("dataInfo.robotBase.vel.names", std::vector<std::string>());get_parameter("dataInfo.robotBase.vel.names", robotBaseVelNames);
+        declare_parameter("dataInfo.lift.motor.names", std::vector<std::string>());get_parameter("dataInfo.lift.motor.names", liftMotorNames);
 
-        nh.param<std::vector<std::string>>("dataInfo/camera/color/parentFrames", cameraColorParentFrames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/camera/depth/parentFrames", cameraDepthParentFrames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/camera/pointCloud/parentFrames", cameraPointCloudParentFrames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/arm/jointState/parentFrames", armJointStateParentFrames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/arm/endPose/parentFrames", armEndPoseParentFrames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/localization/pose/parentFrames", localizationPoseParentFrames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/gripper/encoder/parentFrames", gripperEncoderParentFrames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/imu/9axis/parentFrames", imu9AxisParentFrames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/lidar/pointCloud/parentFrames", lidarPointCloudParentFrames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/robotBase/vel/parentFrames", robotBaseVelParentFrames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/lift/motor/parentFrames", liftMotorParentFrames, std::vector<std::string>());
+        declare_parameter("dataInfo.camera.color.parentFrames", std::vector<std::string>());get_parameter("dataInfo.camera.color.parentFrames", cameraColorParentFrames);
+        declare_parameter("dataInfo.camera.depth.parentFrames", std::vector<std::string>());get_parameter("dataInfo.camera.depth.parentFrames", cameraDepthParentFrames);
+        declare_parameter("dataInfo.camera.pointCloud.parentFrames", std::vector<std::string>());get_parameter("dataInfo.camera.pointCloud.parentFrames", cameraPointCloudParentFrames);
+        declare_parameter("dataInfo.arm.jointState.parentFrames", std::vector<std::string>());get_parameter("dataInfo.arm.jointState.parentFrames", armJointStateParentFrames);
+        declare_parameter("dataInfo.arm.endPose.parentFrames", std::vector<std::string>());get_parameter("dataInfo.arm.endPose.parentFrames", armEndPoseParentFrames);
+        declare_parameter("dataInfo.localization.pose.parentFrames", std::vector<std::string>());get_parameter("dataInfo.localization.pose.parentFrames", localizationPoseParentFrames);
+        declare_parameter("dataInfo.gripper.encoder.parentFrames", std::vector<std::string>());get_parameter("dataInfo.gripper.encoder.parentFrames", gripperEncoderParentFrames);
+        declare_parameter("dataInfo.imu.9axis.parentFrames", std::vector<std::string>());get_parameter("dataInfo.imu.9axis.parentFrames", imu9AxisParentFrames);
+        declare_parameter("dataInfo.lidar.pointCloud.parentFrames", std::vector<std::string>());get_parameter("dataInfo.lidar.pointCloud.parentFrames", lidarPointCloudParentFrames);
+        declare_parameter("dataInfo.robotBase.vel.parentFrames", std::vector<std::string>());get_parameter("dataInfo.robotBase.vel.parentFrames", robotBaseVelParentFrames);
+        declare_parameter("dataInfo.lift.motor.parentFrames", std::vector<std::string>());get_parameter("dataInfo.lift.motor.parentFrames", liftMotorParentFrames);
 
-        nh.param<std::vector<std::string>>("dataInfo/tf/transform/parentFrames", tfTransformParentFrames, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/tf/transform/childFrames", tfTransformChildFrames, std::vector<std::string>());
+        declare_parameter("dataInfo.tf.transform.parentFrames", std::vector<std::string>());get_parameter("dataInfo.tf.transform.parentFrames", tfTransformParentFrames);
+        declare_parameter("dataInfo.tf.transform.childFrames", std::vector<std::string>());get_parameter("dataInfo.tf.transform.childFrames", tfTransformChildFrames);
 
-        nh.param<std::vector<std::string>>("dataInfo/camera/color/topics", cameraColorTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/camera/depth/topics", cameraDepthTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/camera/pointCloud/topics", cameraPointCloudTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/arm/jointState/topics", armJointStateTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/arm/endPose/topics", armEndPoseTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/localization/pose/topics", localizationPoseTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/gripper/encoder/topics", gripperEncoderTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/imu/9axis/topics", imu9AxisTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/lidar/pointCloud/topics", lidarPointCloudTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/robotBase/vel/topics", robotBaseVelTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/lift/motor/topics", liftMotorTopics, std::vector<std::string>());
+        declare_parameter("dataInfo.camera.color.topics", std::vector<std::string>());get_parameter("dataInfo.camera.color.topics", cameraColorTopics);
+        declare_parameter("dataInfo.camera.depth.topics", std::vector<std::string>());get_parameter("dataInfo.camera.depth.topics", cameraDepthTopics);
+        declare_parameter("dataInfo.camera.pointCloud.topics", std::vector<std::string>());get_parameter("dataInfo.camera.pointCloud.topics", cameraPointCloudTopics);
+        declare_parameter("dataInfo.arm.jointState.topics", std::vector<std::string>());get_parameter("dataInfo.arm.jointState.topics", armJointStateTopics);
+        declare_parameter("dataInfo.arm.endPose.topics", std::vector<std::string>());get_parameter("dataInfo.arm.endPose.topics", armEndPoseTopics);
+        declare_parameter("dataInfo.localization.pose.topics", std::vector<std::string>());get_parameter("dataInfo.localization.pose.topics", localizationPoseTopics);
+        declare_parameter("dataInfo.gripper.encoder.topics", std::vector<std::string>());get_parameter("dataInfo.gripper.encoder.topics", gripperEncoderTopics);
+        declare_parameter("dataInfo.imu.9axis.topics", std::vector<std::string>());get_parameter("dataInfo.imu.9axis.topics", imu9AxisTopics);
+        declare_parameter("dataInfo.lidar.pointCloud.topics", std::vector<std::string>());get_parameter("dataInfo.lidar.pointCloud.topics", lidarPointCloudTopics);
+        declare_parameter("dataInfo.robotBase.vel.topics", std::vector<std::string>());get_parameter("dataInfo.robotBase.vel.topics", robotBaseVelTopics);
+        declare_parameter("dataInfo.lift.motor.topics", std::vector<std::string>());get_parameter("dataInfo.lift.motor.topics", liftMotorTopics);
 
-        nh.param<std::vector<std::string>>("dataInfo/camera/color/pubTopics", cameraColorPublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/camera/depth/pubTopics", cameraDepthPublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/camera/pointCloud/pubTopics", cameraPointCloudPublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/arm/jointState/pubTopics", armJointStatePublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/arm/endPose/pubTopics", armEndPosePublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/localization/pose/pubTopics", localizationPosePublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/gripper/encoder/pubTopics", gripperEncoderPublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/imu/9axis/pubTopics", imu9AxisPublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/lidar/pointCloud/pubTopics", lidarPointCloudPublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/robotBase/vel/pubTopics", robotBaseVelPublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/lift/motor/pubTopics", liftMotorPublishTopics, std::vector<std::string>());
+        declare_parameter("dataInfo.camera.color.pubTopics", std::vector<std::string>());get_parameter("dataInfo.camera.color.pubTopics", cameraColorPublishTopics);
+        declare_parameter("dataInfo.camera.depth.pubTopics", std::vector<std::string>());get_parameter("dataInfo.camera.depth.pubTopics", cameraDepthPublishTopics);
+        declare_parameter("dataInfo.camera.pointCloud.pubTopics", std::vector<std::string>());get_parameter("dataInfo.camera.pointCloud.pubTopics", cameraPointCloudPublishTopics);
+        declare_parameter("dataInfo.arm.jointState.pubTopics", std::vector<std::string>());get_parameter("dataInfo.arm.jointState.pubTopics", armJointStatePublishTopics);
+        declare_parameter("dataInfo.arm.endPose.pubTopics", std::vector<std::string>());get_parameter("dataInfo.arm.endPose.pubTopics", armEndPosePublishTopics);
+        declare_parameter("dataInfo.localization.pose.pubTopics", std::vector<std::string>());get_parameter("dataInfo.localization.pose.pubTopics", localizationPosePublishTopics);
+        declare_parameter("dataInfo.gripper.encoder.pubTopics", std::vector<std::string>());get_parameter("dataInfo.gripper.encoder.pubTopics", gripperEncoderPublishTopics);
+        declare_parameter("dataInfo.imu.9axis.pubTopics", std::vector<std::string>());get_parameter("dataInfo.imu.9axis.pubTopics", imu9AxisPublishTopics);
+        declare_parameter("dataInfo.lidar.pointCloud.pubTopics", std::vector<std::string>());get_parameter("dataInfo.lidar.pointCloud.pubTopics", lidarPointCloudPublishTopics);
+        declare_parameter("dataInfo.robotBase.vel.pubTopics", std::vector<std::string>());get_parameter("dataInfo.robotBase.vel.pubTopics", robotBaseVelPublishTopics);
+        declare_parameter("dataInfo.lift.motor.pubTopics", std::vector<std::string>());get_parameter("dataInfo.lift.motor.pubTopics", liftMotorPublishTopics);
         cameraColorPublishTopics = cameraColorPublishTopics.size() == 0 ? cameraColorTopics :cameraColorPublishTopics;
         cameraDepthPublishTopics = cameraDepthPublishTopics.size() == 0 ? cameraDepthTopics :cameraDepthPublishTopics;
         cameraPointCloudPublishTopics = cameraPointCloudPublishTopics.size() == 0 ? cameraPointCloudTopics :cameraPointCloudPublishTopics;
@@ -255,29 +249,29 @@ public:
         robotBaseVelPublishTopics = robotBaseVelPublishTopics.size() == 0 ? robotBaseVelTopics :robotBaseVelPublishTopics;
         liftMotorPublishTopics = liftMotorPublishTopics.size() == 0 ? liftMotorTopics :liftMotorPublishTopics;
 
-        nh.param<std::vector<std::string>>("dataInfo/camera/color/configTopics", cameraColorConfigTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/camera/depth/configTopics", cameraDepthConfigTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/camera/pointCloud/configTopics", cameraPointCloudConfigTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/arm/jointState/configTopics", armJointStateConfigTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/arm/endPose/configTopics", armEndPoseConfigTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/localization/pose/configTopics", localizationPoseConfigTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/gripper/encoder/configTopics", gripperEncoderConfigTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/imu/9axis/configTopics", imu9AxisConfigTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/lidar/pointCloud/configTopics", lidarPointCloudConfigTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/robotBase/vel/configTopics", robotBaseVelConfigTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/lift/motor/configTopics", liftMotorConfigTopics, std::vector<std::string>());
+        declare_parameter("dataInfo.camera.color.configTopics", std::vector<std::string>());get_parameter("dataInfo.camera.color.configTopics", cameraColorConfigTopics);
+        declare_parameter("dataInfo.camera.depth.configTopics", std::vector<std::string>());get_parameter("dataInfo.camera.depth.configTopics", cameraDepthConfigTopics);
+        declare_parameter("dataInfo.camera.pointCloud.configTopics", std::vector<std::string>());get_parameter("dataInfo.camera.pointCloud.configTopics", cameraPointCloudConfigTopics);
+        declare_parameter("dataInfo.arm.jointState.configTopics", std::vector<std::string>());get_parameter("dataInfo.arm.jointState.configTopics", armJointStateConfigTopics);
+        declare_parameter("dataInfo.arm.endPose.configTopics", std::vector<std::string>());get_parameter("dataInfo.arm.endPose.configTopics", armEndPoseConfigTopics);
+        declare_parameter("dataInfo.localization.pose.configTopics", std::vector<std::string>());get_parameter("dataInfo.localization.pose.configTopics", localizationPoseConfigTopics);
+        declare_parameter("dataInfo.gripper.encoder.configTopics", std::vector<std::string>());get_parameter("dataInfo.gripper.encoder.configTopics", gripperEncoderConfigTopics);
+        declare_parameter("dataInfo.imu.9axis.configTopics", std::vector<std::string>());get_parameter("dataInfo.imu.9axis.configTopics", imu9AxisConfigTopics);
+        declare_parameter("dataInfo.lidar.pointCloud.configTopics", std::vector<std::string>());get_parameter("dataInfo.lidar.pointCloud.configTopics", lidarPointCloudConfigTopics);
+        declare_parameter("dataInfo.robotBase.vel.configTopics", std::vector<std::string>());get_parameter("dataInfo.robotBase.vel.configTopics", robotBaseVelConfigTopics);
+        declare_parameter("dataInfo.lift.motor.configTopics", std::vector<std::string>());get_parameter("dataInfo.lift.motor.configTopics", liftMotorConfigTopics);
 
-        nh.param<std::vector<std::string>>("dataInfo/camera/color/pubConfigTopics", cameraColorConfigPublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/camera/depth/pubConfigTopics", cameraDepthConfigPublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/camera/pointCloud/pubConfigTopics", cameraPointCloudConfigPublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/arm/jointState/pubConfigTopics", armJointStateConfigPublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/arm/endPose/pubConfigTopics", armEndPoseConfigPublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/localization/pose/pubConfigTopics", localizationPoseConfigPublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/gripper/encoder/pubConfigTopics", gripperEncoderConfigPublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/imu/9axis/pubConfigTopics", imu9AxisConfigPublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/lidar/pointCloud/pubConfigTopics", lidarPointCloudConfigPublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/robotBase/vel/pubConfigTopics", robotBaseVelConfigPublishTopics, std::vector<std::string>());
-        nh.param<std::vector<std::string>>("dataInfo/lift/motor/pubConfigTopics", liftMotorConfigPublishTopics, std::vector<std::string>());
+        declare_parameter("dataInfo.camera.color.pubConfigTopics", std::vector<std::string>());get_parameter("dataInfo.camera.color.pubConfigTopics", cameraColorConfigPublishTopics);
+        declare_parameter("dataInfo.camera.depth.pubConfigTopics", std::vector<std::string>());get_parameter("dataInfo.camera.depth.pubConfigTopics", cameraDepthConfigPublishTopics);
+        declare_parameter("dataInfo.camera.pointCloud.pubConfigTopics", std::vector<std::string>());get_parameter("dataInfo.camera.pointCloud.pubConfigTopics", cameraPointCloudConfigPublishTopics);
+        declare_parameter("dataInfo.arm.jointState.pubConfigTopics", std::vector<std::string>());get_parameter("dataInfo.arm.jointState.pubConfigTopics", armJointStateConfigPublishTopics);
+        declare_parameter("dataInfo.arm.endPose.pubConfigTopics", std::vector<std::string>());get_parameter("dataInfo.arm.endPose.pubConfigTopics", armEndPoseConfigPublishTopics);
+        declare_parameter("dataInfo.localization.pose.pubConfigTopics", std::vector<std::string>());get_parameter("dataInfo.localization.pose.pubConfigTopics", localizationPoseConfigPublishTopics);
+        declare_parameter("dataInfo.gripper.encoder.pubConfigTopics", std::vector<std::string>());get_parameter("dataInfo.gripper.encoder.pubConfigTopics", gripperEncoderConfigPublishTopics);
+        declare_parameter("dataInfo.imu.9axis.pubConfigTopics", std::vector<std::string>());get_parameter("dataInfo.imu.9axis.pubConfigTopics", imu9AxisConfigPublishTopics);
+        declare_parameter("dataInfo.lidar.pointCloud.pubConfigTopics", std::vector<std::string>());get_parameter("dataInfo.lidar.pointCloud.pubConfigTopics", lidarPointCloudConfigPublishTopics);
+        declare_parameter("dataInfo.robotBase.vel.pubConfigTopics", std::vector<std::string>());get_parameter("dataInfo.robotBase.vel.pubConfigTopics", robotBaseVelConfigPublishTopics);
+        declare_parameter("dataInfo.lift.motor.pubConfigTopics", std::vector<std::string>());get_parameter("dataInfo.lift.motor.pubConfigTopics", liftMotorConfigPublishTopics);
         cameraColorConfigPublishTopics = cameraColorConfigPublishTopics.size() == 0 ? cameraColorConfigTopics :cameraColorConfigPublishTopics;
         cameraDepthConfigPublishTopics = cameraDepthConfigPublishTopics.size() == 0 ? cameraDepthConfigTopics :cameraDepthConfigPublishTopics;
         cameraPointCloudConfigPublishTopics = cameraPointCloudConfigPublishTopics.size() == 0 ? cameraPointCloudConfigTopics :cameraPointCloudConfigPublishTopics;
@@ -290,17 +284,17 @@ public:
         robotBaseVelConfigPublishTopics = robotBaseVelConfigPublishTopics.size() == 0 ? robotBaseVelConfigTopics :robotBaseVelConfigPublishTopics;
         liftMotorConfigPublishTopics = liftMotorConfigPublishTopics.size() == 0 ? liftMotorConfigTopics :liftMotorConfigPublishTopics;
 
-        nh.param<std::vector<bool>>("dataInfo/camera/color/toSyncs", cameraColorToSyncs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/camera/depth/toSyncs", cameraDepthToSyncs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/camera/pointCloud/toSyncs", cameraPointCloudToSyncs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/arm/jointState/toSyncs", armJointStateToSyncs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/arm/endPose/toSyncs", armEndPoseToSyncs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/localization/pose/toSyncs", localizationPoseToSyncs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/gripper/encoder/toSyncs", gripperEncoderToSyncs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/imu/9axis/toSyncs", imu9AxisToSyncs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/lidar/pointCloud/toSyncs", lidarPointCloudToSyncs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/robotBase/vel/toSyncs", robotBaseVelToSyncs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/lift/motor/toSyncs", liftMotorToSyncs, std::vector<bool>());
+        declare_parameter("dataInfo.camera.color.toSyncs", std::vector<bool>());get_parameter("dataInfo.camera.color.toSyncs", cameraColorToSyncs);
+        declare_parameter("dataInfo.camera.depth.toSyncs", std::vector<bool>());get_parameter("dataInfo.camera.depth.toSyncs", cameraDepthToSyncs);
+        declare_parameter("dataInfo.camera.pointCloud.toSyncs", std::vector<bool>());get_parameter("dataInfo.camera.pointCloud.toSyncs", cameraPointCloudToSyncs);
+        declare_parameter("dataInfo.arm.jointState.toSyncs", std::vector<bool>());get_parameter("dataInfo.arm.jointState.toSyncs", armJointStateToSyncs);
+        declare_parameter("dataInfo.arm.endPose.toSyncs", std::vector<bool>());get_parameter("dataInfo.arm.endPose.toSyncs", armEndPoseToSyncs);
+        declare_parameter("dataInfo.localization.pose.toSyncs", std::vector<bool>());get_parameter("dataInfo.localization.pose.toSyncs", localizationPoseToSyncs);
+        declare_parameter("dataInfo.gripper.encoder.toSyncs", std::vector<bool>());get_parameter("dataInfo.gripper.encoder.toSyncs", gripperEncoderToSyncs);
+        declare_parameter("dataInfo.imu.9axis.toSyncs", std::vector<bool>());get_parameter("dataInfo.imu.9axis.toSyncs", imu9AxisToSyncs);
+        declare_parameter("dataInfo.lidar.pointCloud.toSyncs", std::vector<bool>());get_parameter("dataInfo.lidar.pointCloud.toSyncs", lidarPointCloudToSyncs);
+        declare_parameter("dataInfo.robotBase.vel.toSyncs", std::vector<bool>());get_parameter("dataInfo.robotBase.vel.toSyncs", robotBaseVelToSyncs);
+        declare_parameter("dataInfo.lift.motor.toSyncs", std::vector<bool>());get_parameter("dataInfo.lift.motor.toSyncs", liftMotorToSyncs);
         cameraColorToSyncs = cameraColorToSyncs.size() == 0 ? std::vector<bool>(cameraColorTopics.size(), true) : cameraColorToSyncs;
         cameraDepthToSyncs = cameraDepthToSyncs.size() == 0 ? std::vector<bool>(cameraDepthTopics.size(), true) : cameraDepthToSyncs;
         cameraPointCloudToSyncs = cameraPointCloudToSyncs.size() == 0 ? std::vector<bool>(cameraPointCloudTopics.size(), true) : cameraPointCloudToSyncs;
@@ -313,18 +307,18 @@ public:
         robotBaseVelToSyncs = robotBaseVelToSyncs.size() == 0 ? std::vector<bool>(robotBaseVelTopics.size(), true) : robotBaseVelToSyncs;
         liftMotorToSyncs = liftMotorToSyncs.size() == 0 ? std::vector<bool>(liftMotorTopics.size(), true) : liftMotorToSyncs;
 
-        nh.param<std::vector<bool>>("dataInfo/camera/color/toPublishs", cameraColorToPublishs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/camera/depth/toPublishs", cameraDepthToPublishs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/camera/pointCloud/toPublishs", cameraPointCloudToPublishs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/arm/jointState/toPublishs", armJointStateToPublishs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/arm/endPose/toPublishs", armEndPoseToPublishs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/localization/pose/toPublishs", localizationPoseToPublishs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/gripper/encoder/toPublishs", gripperEncoderToPublishs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/imu/9axis/toPublishs", imu9AxisToPublishs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/lidar/pointCloud/toPublishs", lidarPointCloudToPublishs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/robotBase/vel/toPublishs", robotBaseVelToPublishs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/lift/motor/toPublishs", liftMotorToPublishs, std::vector<bool>());
-        nh.param<std::vector<bool>>("dataInfo/tf/transform/toPublishs", tfTransformToPublishs, std::vector<bool>());
+        declare_parameter("dataInfo.camera.color.toPublishs", std::vector<bool>());get_parameter("dataInfo.camera.color.toPublishs", cameraColorToPublishs);
+        declare_parameter("dataInfo.camera.depth.toPublishs", std::vector<bool>());get_parameter("dataInfo.camera.depth.toPublishs", cameraDepthToPublishs);
+        declare_parameter("dataInfo.camera.pointCloud.toPublishs", std::vector<bool>());get_parameter("dataInfo.camera.pointCloud.toPublishs", cameraPointCloudToPublishs);
+        declare_parameter("dataInfo.arm.jointState.toPublishs", std::vector<bool>());get_parameter("dataInfo.arm.jointState.toPublishs", armJointStateToPublishs);
+        declare_parameter("dataInfo.arm.endPose.toPublishs", std::vector<bool>());get_parameter("dataInfo.arm.endPose.toPublishs", armEndPoseToPublishs);
+        declare_parameter("dataInfo.localization.pose.toPublishs", std::vector<bool>());get_parameter("dataInfo.localization.pose.toPublishs", localizationPoseToPublishs);
+        declare_parameter("dataInfo.gripper.encoder.toPublishs", std::vector<bool>());get_parameter("dataInfo.gripper.encoder.toPublishs", gripperEncoderToPublishs);
+        declare_parameter("dataInfo.imu.9axis.toPublishs", std::vector<bool>());get_parameter("dataInfo.imu.9axis.toPublishs", imu9AxisToPublishs);
+        declare_parameter("dataInfo.lidar.pointCloud.toPublishs", std::vector<bool>());get_parameter("dataInfo.lidar.pointCloud.toPublishs", lidarPointCloudToPublishs);
+        declare_parameter("dataInfo.robotBase.vel.toPublishs", std::vector<bool>());get_parameter("dataInfo.robotBase.vel.toPublishs", robotBaseVelToPublishs);
+        declare_parameter("dataInfo.lift.motor.toPublishs", std::vector<bool>());get_parameter("dataInfo.lift.motor.toPublishs", liftMotorToPublishs);
+        declare_parameter("dataInfo.tf.transform.toPublishs", std::vector<bool>());get_parameter("dataInfo.tf.transform.toPublishs", tfTransformToPublishs);
         cameraColorToPublishs = cameraColorToPublishs.size() == 0 ? std::vector<bool>(cameraColorTopics.size(), true) : cameraColorToPublishs;
         cameraDepthToPublishs = cameraDepthToPublishs.size() == 0 ? std::vector<bool>(cameraDepthTopics.size(), true) : cameraDepthToPublishs;
         cameraPointCloudToPublishs = cameraPointCloudToPublishs.size() == 0 ? std::vector<bool>(cameraPointCloudTopics.size(), true) : cameraPointCloudToPublishs;
@@ -338,18 +332,18 @@ public:
         liftMotorToPublishs = liftMotorToPublishs.size() == 0 ? std::vector<bool>(liftMotorTopics.size(), true) : liftMotorToPublishs;
         tfTransformToPublishs = tfTransformToPublishs.size() == 0 ? std::vector<bool>(tfTransformParentFrames.size(), true) : robotBaseVelToPublishs;
 
-        nh.param<std::vector<float>>("dataInfo/camera/pointCloud/maxDistances", cameraPointCloudMaxDistances, std::vector<float>());
-        nh.param<std::vector<float>>("dataInfo/camera/pointCloud/downSizes", cameraPointCloudDownSizes, std::vector<float>());
+        declare_parameter("dataInfo.camera.pointCloud.maxDistances", std::vector<double>());get_parameter("dataInfo.camera.pointCloud.maxDistances", cameraPointCloudMaxDistances);
+        declare_parameter("dataInfo.camera.pointCloud.downSizes", std::vector<double>());get_parameter("dataInfo.camera.pointCloud.downSizes", cameraPointCloudDownSizes);
 
-        nh.param<std::vector<float>>("dataInfo/lidar/pointCloud/xDistanceUppers", lidarPointCloudXDistanceUppers, std::vector<float>());
-        nh.param<std::vector<float>>("dataInfo/lidar/pointCloud/xDistanceLowers", lidarPointCloudXDistancelowers, std::vector<float>());
-        nh.param<std::vector<float>>("dataInfo/lidar/pointCloud/yDistanceUppers", lidarPointCloudYDistanceUppers, std::vector<float>());
-        nh.param<std::vector<float>>("dataInfo/lidar/pointCloud/yDistanceLowers", lidarPointCloudYDistancelowers, std::vector<float>());
-        nh.param<std::vector<float>>("dataInfo/lidar/pointCloud/zDistanceUppers", lidarPointCloudZDistanceUppers, std::vector<float>());
-        nh.param<std::vector<float>>("dataInfo/lidar/pointCloud/zDistanceLowers", lidarPointCloudZDistancelowers, std::vector<float>());
-        nh.param<std::vector<float>>("dataInfo/lidar/pointCloud/downSizes", lidarPointCloudDownSizes, std::vector<float>());
-        
-        nh.param<std::vector<bool>>("dataInfo/arm/endPose/orients", armEndPoseOrients, std::vector<bool>());
+        declare_parameter("dataInfo.lidar.pointCloud.xDistanceUppers", std::vector<double>());get_parameter("dataInfo.lidar.pointCloud.xDistanceUppers", lidarPointCloudXDistanceUppers);
+        declare_parameter("dataInfo.lidar.pointCloud.xDistanceLowers", std::vector<double>());get_parameter("dataInfo.lidar.pointCloud.xDistanceLowers", lidarPointCloudXDistancelowers);
+        declare_parameter("dataInfo.lidar.pointCloud.yDistanceUppers", std::vector<double>());get_parameter("dataInfo.lidar.pointCloud.yDistanceUppers", lidarPointCloudYDistanceUppers);
+        declare_parameter("dataInfo.lidar.pointCloud.yDistanceLowers", std::vector<double>());get_parameter("dataInfo.lidar.pointCloud.yDistanceLowers", lidarPointCloudYDistancelowers);
+        declare_parameter("dataInfo.lidar.pointCloud.zDistanceUppers", std::vector<double>());get_parameter("dataInfo.lidar.pointCloud.zDistanceUppers", lidarPointCloudZDistanceUppers);
+        declare_parameter("dataInfo.lidar.pointCloud.zDistanceLowers", std::vector<double>());get_parameter("dataInfo.lidar.pointCloud.zDistanceLowers", lidarPointCloudZDistancelowers);
+        declare_parameter("dataInfo.lidar.pointCloud.downSizes", std::vector<double>());get_parameter("dataInfo.lidar.pointCloud.downSizes", lidarPointCloudDownSizes);
+
+        declare_parameter("dataInfo.arm.endPose.orients", std::vector<bool>());get_parameter("dataInfo.arm.endPose.orients", armEndPoseOrients);
         armEndPoseOrients = armEndPoseOrients.size() == 0 ? std::vector<bool>(armEndPoseNames.size(), true) : armEndPoseOrients;
 
         datasetDir = datasetDirParam;

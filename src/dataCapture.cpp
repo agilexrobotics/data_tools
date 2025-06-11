@@ -9,65 +9,64 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <tf/LinearMath/Quaternion.h>
-#include <tf/transform_listener.h>
-#include <tf/transform_datatypes.h>
-#include <tf/transform_broadcaster.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_eigen/tf2_eigen.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <fstream>
-#include <sensor_msgs/Imu.h>
-#include <data_msgs/Gripper.h>
-#include <data_msgs/CaptureService.h>
+#include <sensor_msgs/msg/imu.hpp>
+#include <data_msgs/msg/gripper.hpp>
+#include <data_msgs/msg/capture_status.hpp>
+#include "data_msgs/srv/capture_service.hpp"
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/crop_box.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/compression/octree_pointcloud_compression.h>
 #include "jsoncpp/json/json.h"
-#include <data_msgs/CaptureStatus.h>
 #ifdef _USELIFT
-#include <bt_task_msgs/LiftMotorMsg.h>
+#include <bt_task_msgs/msg/lift_motor_msg.hpp>
 #endif
 
 class DataCapture: public DataUtility{
 public:
-    std::vector<ros::Subscriber> subCameraColors;
-    std::vector<ros::Subscriber> subCameraDepths;
-    std::vector<ros::Subscriber> subCameraPointClouds;
-    std::vector<ros::Subscriber> subArmJointStates;
-    std::vector<ros::Subscriber> subArmEndPoses;
-    std::vector<ros::Subscriber> subLocalizationPoses;
-    std::vector<ros::Subscriber> subGripperEncoders;
-    std::vector<ros::Subscriber> subImu9Axiss;
-    std::vector<ros::Subscriber> subLidarPointClouds;
-    std::vector<ros::Subscriber> subRobotBaseVels;
-    std::vector<ros::Subscriber> subLiftMotors;
-
-    ros::Publisher pubCaptureStatus;
-
-    std::vector<ros::Subscriber> subCameraColorConfigs;
-    std::vector<ros::Subscriber> subCameraDepthConfigs;
-    std::vector<ros::Subscriber> subCameraPointCloudConfigs;
-    std::vector<ros::Subscriber> subArmJointStateConfigs;
-    std::vector<ros::Subscriber> subArmEndPoseConfigs;
-    std::vector<ros::Subscriber> subLocalizationPoseConfigs;
-    std::vector<ros::Subscriber> subGripperEncoderConfigs;
-    std::vector<ros::Subscriber> subImu9AxisConfigs;
-    std::vector<ros::Subscriber> subLidarPointCloudConfigs;
-    std::vector<ros::Subscriber> subRobotBaseVelConfigs;
-    std::vector<ros::Subscriber> subLiftMotorConfigs;
-
-    std::vector<BlockingDeque<sensor_msgs::Image>> cameraColorMsgDeques;
-    std::vector<BlockingDeque<sensor_msgs::Image>> cameraDepthMsgDeques;
-    std::vector<BlockingDeque<sensor_msgs::PointCloud2>> cameraPointCloudMsgDeques;
-    std::vector<BlockingDeque<sensor_msgs::JointState>> armJointStateMsgDeques;
-    std::vector<BlockingDeque<geometry_msgs::PoseStamped>> armEndPoseMsgDeques;
-    std::vector<BlockingDeque<geometry_msgs::PoseStamped>> localizationPoseMsgDeques;
-    std::vector<BlockingDeque<data_msgs::Gripper>> gripperEncoderMsgDeques;
-    std::vector<BlockingDeque<sensor_msgs::Imu>> imu9AxisMsgDeques;
-    std::vector<BlockingDeque<sensor_msgs::PointCloud2>> lidarPointCloudMsgDeques;
-    std::vector<BlockingDeque<nav_msgs::Odometry>> robotBaseVelMsgDeques;
+    std::vector<rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr> subCameraColors;
+    std::vector<rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr> subCameraDepths;
+    std::vector<rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr> subCameraPointClouds;
+    std::vector<rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr> subArmJointStates;
+    std::vector<rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr> subArmEndPoses;
+    std::vector<rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr> subLocalizationPoses;
+    std::vector<rclcpp::Subscription<data_msgs::msg::Gripper>::SharedPtr> subGripperEncoders;
+    std::vector<rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr> subImu9Axiss;
+    std::vector<rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr> subLidarPointClouds;
+    std::vector<rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr> subRobotBaseVels;
     #ifdef _USELIFT
-    std::vector<BlockingDeque<bt_task_msgs::LiftMotorMsg>> liftMotorMsgDeques;
+    std::vector<rclcpp::Subscription<bt_task_msgs::msg::LiftMotorMsg>::SharedPtr> subLiftMotors;
+    #endif
+    std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> subCameraColorConfigs;
+    std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> subCameraDepthConfigs;
+    std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> subCameraPointCloudConfigs;
+    // std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> subArmJointStateConfigs;
+    // std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> subArmEndPoseConfigs;
+    // std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> subLocalizationPoseConfigs;
+    // std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> subGripperEncoderConfigs;
+    // std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> subImu9AxisConfigs;
+    // std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> subLidarPointCloudConfigs;
+    // std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> subRobotBaseVelConfigs;
+
+    rclcpp::Publisher<data_msgs::msg::CaptureStatus>::SharedPtr pubCaptureStatus;
+
+    std::vector<BlockingDeque<sensor_msgs::msg::Image>> cameraColorMsgDeques;
+    std::vector<BlockingDeque<sensor_msgs::msg::Image>> cameraDepthMsgDeques;
+    std::vector<BlockingDeque<sensor_msgs::msg::PointCloud2>> cameraPointCloudMsgDeques;
+    std::vector<BlockingDeque<sensor_msgs::msg::JointState>> armJointStateMsgDeques;
+    std::vector<BlockingDeque<geometry_msgs::msg::PoseStamped>> armEndPoseMsgDeques;
+    std::vector<BlockingDeque<geometry_msgs::msg::PoseStamped>> localizationPoseMsgDeques;
+    std::vector<BlockingDeque<data_msgs::msg::Gripper>> gripperEncoderMsgDeques;
+    std::vector<BlockingDeque<sensor_msgs::msg::Imu>> imu9AxisMsgDeques;
+    std::vector<BlockingDeque<sensor_msgs::msg::PointCloud2>> lidarPointCloudMsgDeques;
+    std::vector<BlockingDeque<nav_msgs::msg::Odometry>> robotBaseVelMsgDeques;
+    #ifdef _USELIFT
+    std::vector<BlockingDeque<bt_task_msgs::msg::LiftMotorMsg>> liftMotorMsgDeques;
     #endif
 
     std::vector<std::thread*> cameraColorSavingThreads;
@@ -107,7 +106,7 @@ public:
     std::vector<int> robotBaseVelConfigMsgCounts;
     std::vector<int> liftMotorConfigMsgCounts;
     std::vector<int> tfTransformMsgCounts;
-
+    
     std::vector<double> cameraColorStartTimeStamps;
     std::vector<double> cameraDepthStartTimeStamps;
     std::vector<double> cameraPointCloudStartTimeStamps;
@@ -161,6 +160,9 @@ public:
     std::vector<std::string> cameraDepthFrameIds;
     std::vector<std::string> cameraPointCloudFrameIds;
 
+    std::shared_ptr<tf2_ros::TransformListener> tfListener;
+    std::unique_ptr<tf2_ros::Buffer> tfBuffer;
+
     std::thread* keyboardInterruptCheckingThread;
     std::thread* monitoringThread;
     bool keyboardInterrupt = false;
@@ -173,7 +175,7 @@ public:
     int timeout;
     double cropTime;
 
-    DataCapture(std::string datasetDir, int episodeIndex, int hz, int timeout, double cropTime=-1, bool useService=false): DataUtility(datasetDir, episodeIndex) {
+    DataCapture(std::string name, const rclcpp::NodeOptions & options, std::string datasetDir, int episodeIndex, int hz, int timeout, double cropTime=-1, bool useService=false): DataUtility(name, options, datasetDir, episodeIndex) {
         this->useService = useService;
         this->hz = hz;
         this->timeout = timeout;
@@ -192,19 +194,39 @@ public:
         unused = system((std::string("mkdir -p ") + liftMotorDir).c_str());
         unused = system((std::string("mkdir -p ") + tfTransformDir).c_str());
 
-        cameraColorMsgDeques = std::vector<BlockingDeque<sensor_msgs::Image>>(cameraColorNames.size());
-        cameraDepthMsgDeques = std::vector<BlockingDeque<sensor_msgs::Image>>(cameraDepthNames.size());
-        cameraPointCloudMsgDeques = std::vector<BlockingDeque<sensor_msgs::PointCloud2>>(cameraPointCloudNames.size());
-        armJointStateMsgDeques = std::vector<BlockingDeque<sensor_msgs::JointState>>(armJointStateNames.size());
-        armEndPoseMsgDeques = std::vector<BlockingDeque<geometry_msgs::PoseStamped>>(armEndPoseNames.size());
-        localizationPoseMsgDeques = std::vector<BlockingDeque<geometry_msgs::PoseStamped>>(localizationPoseNames.size());
-        gripperEncoderMsgDeques = std::vector<BlockingDeque<data_msgs::Gripper>>(gripperEncoderNames.size());
-        imu9AxisMsgDeques = std::vector<BlockingDeque<sensor_msgs::Imu>>(imu9AxisNames.size());
-        lidarPointCloudMsgDeques = std::vector<BlockingDeque<sensor_msgs::PointCloud2>>(lidarPointCloudNames.size());
-        robotBaseVelMsgDeques = std::vector<BlockingDeque<nav_msgs::Odometry>>(robotBaseVelNames.size());
+        cameraColorMsgDeques = std::vector<BlockingDeque<sensor_msgs::msg::Image>>(cameraColorNames.size());
+        cameraDepthMsgDeques = std::vector<BlockingDeque<sensor_msgs::msg::Image>>(cameraDepthNames.size());
+        cameraPointCloudMsgDeques = std::vector<BlockingDeque<sensor_msgs::msg::PointCloud2>>(cameraPointCloudNames.size());
+        armJointStateMsgDeques = std::vector<BlockingDeque<sensor_msgs::msg::JointState>>(armJointStateNames.size());
+        armEndPoseMsgDeques = std::vector<BlockingDeque<geometry_msgs::msg::PoseStamped>>(armEndPoseNames.size());
+        localizationPoseMsgDeques = std::vector<BlockingDeque<geometry_msgs::msg::PoseStamped>>(localizationPoseNames.size());
+        gripperEncoderMsgDeques = std::vector<BlockingDeque<data_msgs::msg::Gripper>>(gripperEncoderNames.size());
+        imu9AxisMsgDeques = std::vector<BlockingDeque<sensor_msgs::msg::Imu>>(imu9AxisNames.size());
+        lidarPointCloudMsgDeques = std::vector<BlockingDeque<sensor_msgs::msg::PointCloud2>>(lidarPointCloudNames.size());
+        robotBaseVelMsgDeques = std::vector<BlockingDeque<nav_msgs::msg::Odometry>>(robotBaseVelNames.size());
         #ifdef _USELIFT
-        liftMotorMsgDeques = std::vector<BlockingDeque<bt_task_msgs::LiftMotorMsg>>(liftMotorNames.size());
+        liftMotorMsgDeques = std::vector<BlockingDeque<bt_task_msgs::msg::LiftMotorMsg>>(liftMotorNames.size());
         #endif
+
+        subCameraColors = std::vector<rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr>(cameraColorNames.size());
+        subCameraDepths = std::vector<rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr>(cameraDepthNames.size());
+        subCameraPointClouds = std::vector<rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr>(cameraPointCloudNames.size());
+        subArmJointStates = std::vector<rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr>(armJointStateNames.size());
+        subArmEndPoses = std::vector<rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr>(armEndPoseNames.size());
+        subLocalizationPoses = std::vector<rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr>(localizationPoseNames.size());
+        subGripperEncoders = std::vector<rclcpp::Subscription<data_msgs::msg::Gripper>::SharedPtr>(gripperEncoderNames.size());
+        subImu9Axiss = std::vector<rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr>(imu9AxisNames.size());
+        subLidarPointClouds = std::vector<rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr>(lidarPointCloudNames.size());
+        subRobotBaseVels = std::vector<rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr>(robotBaseVelNames.size());
+        #ifdef _USELIFT
+        subLiftMotors = std::vector<rclcpp::Subscription<bt_task_msgs::msg::LiftMotorMsg>::SharedPtr>(liftMotorNames.size());
+        #endif
+
+        subCameraColorConfigs = std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr>(cameraColorNames.size());
+        subCameraDepthConfigs = std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr>(cameraDepthNames.size());
+        subCameraPointCloudConfigs = std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr>(cameraPointCloudNames.size());
+
+        pubCaptureStatus = create_publisher<data_msgs::msg::CaptureStatus>("/data_tools_dataCapture/status", 2000);
 
         cameraColorMsgCounts = std::vector<int>(cameraColorNames.size(), 0);
         cameraDepthMsgCounts = std::vector<int>(cameraDepthNames.size(), 0);
@@ -217,6 +239,19 @@ public:
         lidarPointCloudMsgCounts = std::vector<int>(lidarPointCloudNames.size(), 0);
         robotBaseVelMsgCounts = std::vector<int>(robotBaseVelNames.size(), 0);
         liftMotorMsgCounts = std::vector<int>(liftMotorNames.size(), 0);
+        tfTransformMsgCounts = std::vector<int>(tfTransformParentFrames.size(), 0);
+
+        cameraColorConfigMsgCounts = std::vector<int>(cameraColorNames.size(), 0);
+        cameraDepthConfigMsgCounts = std::vector<int>(cameraDepthNames.size(), 0);
+        cameraPointCloudConfigMsgCounts = std::vector<int>(cameraPointCloudNames.size(), 0);
+        armJointStateConfigMsgCounts = std::vector<int>(armJointStateNames.size(), 0);
+        armEndPoseConfigMsgCounts = std::vector<int>(armEndPoseNames.size(), 0);
+        localizationPoseConfigMsgCounts = std::vector<int>(localizationPoseNames.size(), 0);
+        gripperEncoderConfigMsgCounts = std::vector<int>(gripperEncoderNames.size(), 0);
+        imu9AxisConfigMsgCounts = std::vector<int>(imu9AxisNames.size(), 0);
+        lidarPointCloudConfigMsgCounts = std::vector<int>(lidarPointCloudNames.size(), 0);
+        liftMotorConfigMsgCounts = std::vector<int>(liftMotorNames.size(), 0);
+        robotBaseVelConfigMsgCounts = std::vector<int>(robotBaseVelNames.size(), 0);
 
         cameraColorStartTimeStamps = std::vector<double>(cameraColorNames.size(), 0);
         cameraDepthStartTimeStamps = std::vector<double>(cameraDepthNames.size(), 0);
@@ -241,19 +276,6 @@ public:
         lidarPointCloudLastTimeStamps = std::vector<double>(lidarPointCloudNames.size(), 0);
         robotBaseVelLastTimeStamps = std::vector<double>(robotBaseVelNames.size(), 0);
         liftMotorLastTimeStamps = std::vector<double>(liftMotorNames.size(), 0);
-
-        cameraColorConfigMsgCounts = std::vector<int>(cameraColorNames.size(), 0);
-        cameraDepthConfigMsgCounts = std::vector<int>(cameraDepthNames.size(), 0);
-        cameraPointCloudConfigMsgCounts = std::vector<int>(cameraPointCloudNames.size(), 0);
-        armJointStateConfigMsgCounts = std::vector<int>(armJointStateNames.size(), 0);
-        armEndPoseConfigMsgCounts = std::vector<int>(armEndPoseNames.size(), 0);
-        localizationPoseConfigMsgCounts = std::vector<int>(localizationPoseNames.size(), 0);
-        gripperEncoderConfigMsgCounts = std::vector<int>(gripperEncoderNames.size(), 0);
-        imu9AxisConfigMsgCounts = std::vector<int>(imu9AxisNames.size(), 0);
-        lidarPointCloudConfigMsgCounts = std::vector<int>(lidarPointCloudNames.size(), 0);
-        robotBaseVelConfigMsgCounts = std::vector<int>(robotBaseVelNames.size(), 0);
-        liftMotorConfigMsgCounts = std::vector<int>(liftMotorNames.size(), 0);
-        tfTransformMsgCounts = std::vector<int>(tfTransformParentFrames.size(), 0);
 
         cameraColorMsgCountMtxs = std::vector<std::mutex>(cameraColorNames.size());
         cameraDepthMsgCountMtxs = std::vector<std::mutex>(cameraDepthNames.size());
@@ -284,57 +306,58 @@ public:
         cameraDepthFrameIds = std::vector<std::string>(cameraDepthNames.size(), "");
         cameraPointCloudFrameIds = std::vector<std::string>(cameraPointCloudNames.size(), "");
 
+        tfBuffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+        tfListener = std::make_shared<tf2_ros::TransformListener>(*tfBuffer);
+
         for(int i = 0; i < cameraColorNames.size(); i++){
             unused = system((std::string("mkdir -p ") + cameraColorDirs.at(i)).c_str());
-            subCameraColors.push_back(nh.subscribe<sensor_msgs::Image>(cameraColorTopics[i], 2000, boost::bind(&DataCapture::cameraColorHandler, this, _1, i), ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay()));
-            subCameraColorConfigs.push_back(nh.subscribe<sensor_msgs::CameraInfo>(cameraColorConfigTopics[i], 2000, boost::bind(&DataCapture::cameraColorConfigHandler, this, _1, i), ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay()));
+            subCameraColors[i] = create_subscription<sensor_msgs::msg::Image>(cameraColorTopics[i], 2000, [this, i](const sensor_msgs::msg::Image::SharedPtr msg) { this->cameraColorHandler(msg, i);});
+            subCameraColorConfigs[i] = create_subscription<sensor_msgs::msg::CameraInfo>(cameraColorConfigTopics[i], 2000, [this, i](const sensor_msgs::msg::CameraInfo::SharedPtr msg) { this->cameraColorConfigHandler(msg, i);});
         }
         for(int i = 0; i < cameraDepthNames.size(); i++){
             unused = system((std::string("mkdir -p ") + cameraDepthDirs.at(i)).c_str());
-            subCameraDepths.push_back(nh.subscribe<sensor_msgs::Image>(cameraDepthTopics[i], 2000, boost::bind(&DataCapture::cameraDepthHandler, this, _1, i), ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay()));
-            subCameraDepthConfigs.push_back(nh.subscribe<sensor_msgs::CameraInfo>(cameraDepthConfigTopics[i], 2000, boost::bind(&DataCapture::cameraDepthConfigHandler, this, _1, i), ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay()));
+            subCameraDepths[i] = create_subscription<sensor_msgs::msg::Image>(cameraDepthTopics[i], 2000, [this, i](const sensor_msgs::msg::Image::SharedPtr msg) { this->cameraDepthHandler(msg, i);});
+            subCameraDepthConfigs[i] = create_subscription<sensor_msgs::msg::CameraInfo>(cameraDepthConfigTopics[i], 2000, [this, i](const sensor_msgs::msg::CameraInfo::SharedPtr msg) { this->cameraDepthConfigHandler(msg, i);});
         }
         for(int i = 0; i < cameraPointCloudNames.size(); i++){
             unused = system((std::string("mkdir -p ") + cameraPointCloudDirs.at(i)).c_str());
-            subCameraPointClouds.push_back(nh.subscribe<sensor_msgs::PointCloud2>(cameraPointCloudTopics[i], 2000, boost::bind(&DataCapture::cameraPointCloudHandler, this, _1, i), ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay()));
-            subCameraPointCloudConfigs.push_back(nh.subscribe<sensor_msgs::CameraInfo>(cameraPointCloudConfigTopics[i], 2000, boost::bind(&DataCapture::cameraPointCloudConfigHandler, this, _1, i), ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay()));
+            subCameraPointClouds[i] = create_subscription<sensor_msgs::msg::PointCloud2>(cameraPointCloudTopics[i], 2000, [this, i](const sensor_msgs::msg::PointCloud2::SharedPtr msg) { this->cameraPointCloudHandler(msg, i);});
+            subCameraPointCloudConfigs[i] = create_subscription<sensor_msgs::msg::CameraInfo>(cameraPointCloudConfigTopics[i], 2000, [this, i](const sensor_msgs::msg::CameraInfo::SharedPtr msg) { this->cameraPointCloudConfigHandler(msg, i);});
         }
         for(int i = 0; i < armJointStateNames.size(); i++){
             unused = system((std::string("mkdir -p ") + armJointStateDirs.at(i)).c_str());
-            subArmJointStates.push_back(nh.subscribe<sensor_msgs::JointState>(armJointStateTopics[i], 2000, boost::bind(&DataCapture::armJointStateHandler, this, _1, i), ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay()));
+            subArmJointStates[i] = create_subscription<sensor_msgs::msg::JointState>(armJointStateTopics[i], 2000, [this, i](const sensor_msgs::msg::JointState::SharedPtr msg) { this->armJointStateHandler(msg, i);});
         }
         for(int i = 0; i < armEndPoseNames.size(); i++){
             unused = system((std::string("mkdir -p ") + armEndPoseDirs.at(i)).c_str());
-            subArmEndPoses.push_back(nh.subscribe<geometry_msgs::PoseStamped>(armEndPoseTopics[i], 2000, boost::bind(&DataCapture::armEndPoseHandler, this, _1, i), ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay()));
+            subArmEndPoses[i] = create_subscription<geometry_msgs::msg::PoseStamped>(armEndPoseTopics[i], 2000, [this, i](const geometry_msgs::msg::PoseStamped::SharedPtr msg) { this->armEndPoseHandler(msg, i);});
         }
         for(int i = 0; i < localizationPoseNames.size(); i++){
             unused = system((std::string("mkdir -p ") + localizationPoseDirs.at(i)).c_str());
-            subLocalizationPoses.push_back(nh.subscribe<geometry_msgs::PoseStamped>(localizationPoseTopics[i], 2000, boost::bind(&DataCapture::localizationPoseHandler, this, _1, i), ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay()));
+            subLocalizationPoses[i] = create_subscription<geometry_msgs::msg::PoseStamped>(localizationPoseTopics[i], 2000, [this, i](const geometry_msgs::msg::PoseStamped::SharedPtr msg) { this->localizationPoseHandler(msg, i);});
         }
         for(int i = 0; i < gripperEncoderNames.size(); i++){
             unused = system((std::string("mkdir -p ") + gripperEncoderDirs.at(i)).c_str());
-            subGripperEncoders.push_back(nh.subscribe<data_msgs::Gripper>(gripperEncoderTopics[i], 2000, boost::bind(&DataCapture::gripperEncoderHandler, this, _1, i), ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay()));
+            subGripperEncoders[i] = create_subscription<data_msgs::msg::Gripper>(gripperEncoderTopics[i], 2000, [this, i](const data_msgs::msg::Gripper::SharedPtr msg) { this->gripperEncoderHandler(msg, i);});
         }
         for(int i = 0; i < imu9AxisNames.size(); i++){
             unused = system((std::string("mkdir -p ") + imu9AxisDirs.at(i)).c_str());
-            subImu9Axiss.push_back(nh.subscribe<sensor_msgs::Imu>(imu9AxisTopics[i], 2000, boost::bind(&DataCapture::imu9AxisHandler, this, _1, i), ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay()));
+            subImu9Axiss[i] = create_subscription<sensor_msgs::msg::Imu>(imu9AxisTopics[i], 2000, [this, i](const sensor_msgs::msg::Imu::SharedPtr msg) { this->imu9AxisHandler(msg, i);});
         }
         for(int i = 0; i < lidarPointCloudNames.size(); i++){
             unused = system((std::string("mkdir -p ") + lidarPointCloudDirs.at(i)).c_str());
-            subLidarPointClouds.push_back(nh.subscribe<sensor_msgs::PointCloud2>(lidarPointCloudTopics[i], 2000, boost::bind(&DataCapture::lidarPointCloudHandler, this, _1, i), ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay()));
+            subLidarPointClouds[i] = create_subscription<sensor_msgs::msg::PointCloud2>(lidarPointCloudTopics[i], 2000, [this, i](const sensor_msgs::msg::PointCloud2::SharedPtr msg) { this->lidarPointCloudHandler(msg, i);});
         }
         for(int i = 0; i < robotBaseVelNames.size(); i++){
             unused = system((std::string("mkdir -p ") + robotBaseVelDirs.at(i)).c_str());
-            subRobotBaseVels.push_back(nh.subscribe<nav_msgs::Odometry>(robotBaseVelTopics[i], 2000, boost::bind(&DataCapture::robotBaseVelHandler, this, _1, i), ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay()));
+            subRobotBaseVels[i] = create_subscription<nav_msgs::msg::Odometry>(robotBaseVelTopics[i], 2000, [this, i](const nav_msgs::msg::Odometry::SharedPtr msg) { this->robotBaseVelHandler(msg, i);});
         }
         #ifdef _USELIFT
         for(int i = 0; i < liftMotorNames.size(); i++){
             unused = system((std::string("mkdir -p ") + liftMotorDirs.at(i)).c_str());
-            subLiftMotors.push_back(nh.subscribe<bt_task_msgs::LiftMotorMsg>(liftMotorTopics[i], 2000, boost::bind(&DataCapture::liftMotorHandler, this, _1, i), ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay()));
+            subLiftMotors[i] = create_subscription<bt_task_msgs::msg::LiftMotorMsg>(liftMotorTopics[i], 2000, [this, i](const bt_task_msgs::msg::LiftMotorMsg::SharedPtr msg) { this->liftMotorHandler(msg, i);});
         }
         #endif
-
-        pubCaptureStatus = nh.advertise<data_msgs::CaptureStatus>("/data_tools_dataCapture/status", 2000);
     }
 
     void run(){
@@ -451,52 +474,52 @@ public:
         monitoringThread->join();
         delete monitoringThread;
         monitoringThread = nullptr;
-        data_msgs::CaptureStatus captureStatus;
+        data_msgs::msg::CaptureStatus captureStatus;
         captureStatus.quit = true;
-        pubCaptureStatus.publish(captureStatus);
+        pubCaptureStatus->publish(captureStatus);
     }
 
-    void cameraColorHandler(const sensor_msgs::Image::ConstPtr& msg, const int& index){
+    void cameraColorHandler(const sensor_msgs::msg::Image::SharedPtr& msg, const int& index){
+        cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
         cameraColorMsgDeques.at(index).push_back(*msg);
         std::lock_guard<std::mutex> lock(cameraColorMsgCountMtxs.at(index));
         if(cameraColorMsgCounts.at(index) == 0){
-            cameraColorStartTimeStamps.at(index) = msg->header.stamp.toSec();
+            cameraColorStartTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }else{
-            cameraColorLastTimeStamps.at(index) = msg->header.stamp.toSec();
+            cameraColorLastTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }
         cameraColorMsgCounts.at(index) += 1;
         cameraColorFrameIds.at(index) = msg->header.frame_id;
     }
 
-    void cameraDepthHandler(const sensor_msgs::Image::ConstPtr& msg, const int& index){
+    void cameraDepthHandler(const sensor_msgs::msg::Image::SharedPtr& msg, const int& index){
         cameraDepthMsgDeques.at(index).push_back(*msg);
         std::lock_guard<std::mutex> lock(cameraDepthMsgCountMtxs.at(index));
         if(cameraDepthMsgCounts.at(index) == 0){
-            cameraDepthStartTimeStamps.at(index) = msg->header.stamp.toSec();
+            cameraDepthStartTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }else{
-            cameraDepthLastTimeStamps.at(index) = msg->header.stamp.toSec();
+            cameraDepthLastTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }
         cameraDepthMsgCounts.at(index) += 1;
         cameraDepthFrameIds.at(index) = msg->header.frame_id;
     }
 
-    void cameraPointCloudHandler(const sensor_msgs::PointCloud2::ConstPtr& msg, const int& index){
+    void cameraPointCloudHandler(const sensor_msgs::msg::PointCloud2::SharedPtr& msg, const int& index){
         cameraPointCloudMsgDeques.at(index).push_back(*msg);
         std::lock_guard<std::mutex> lock(cameraPointCloudMsgCountMtxs.at(index));
         if(cameraPointCloudMsgCounts.at(index) == 0){
-            cameraPointCloudStartTimeStamps.at(index) = msg->header.stamp.toSec();
+            cameraPointCloudStartTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }else{
-            cameraPointCloudLastTimeStamps.at(index) = msg->header.stamp.toSec();
+            cameraPointCloudLastTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }
         cameraPointCloudMsgCounts.at(index) += 1;
         cameraPointCloudFrameIds.at(index) = msg->header.frame_id;
     }
 
-    void cameraColorConfigHandler(const sensor_msgs::CameraInfo::ConstPtr& msg, const int& index){
+    void cameraColorConfigHandler(const sensor_msgs::msg::CameraInfo::SharedPtr& msg, const int& index){
         if(cameraColorFrameIds.at(index) == "")
             return;
-        tf::TransformListener listener;
-		tf::StampedTransform transform;
+        geometry_msgs::msg::TransformStamped transform;
 		while(cameraColorFrameIds.at(index) != ""){
             if(captureStopMtx.try_lock()){
                 bool stop = captureStop;
@@ -505,20 +528,18 @@ public:
                     break;
             }
             try {
-                listener.waitForTransform(cameraColorParentFrames.at(index), cameraColorFrameIds.at(index), ros::Time(0), ros::Duration(3.0));
-                listener.lookupTransform(cameraColorParentFrames.at(index), cameraColorFrameIds.at(index), ros::Time(0), transform);
+                transform = tfBuffer->lookupTransform(cameraColorParentFrames.at(index), cameraColorFrameIds.at(index), tf2::TimePointZero);
                 break;
-            } catch(tf::TransformException &ex) {
-                ros::Duration(1.0).sleep();
+            } catch (const tf2::TransformException & ex) {
                 continue;
             }
 		}
-		double x = transform.getOrigin().x();
-        double y = transform.getOrigin().y();
-        double z = transform.getOrigin().z();
+		double x = transform.transform.translation.x;
+        double y = transform.transform.translation.y;
+        double z = transform.transform.translation.z;
         double roll, pitch, yaw;
-        tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(), transform.getRotation().w());
-        tf::Matrix3x3 m(q);
+        tf2::Quaternion q(transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z, transform.transform.rotation.w);
+        tf2::Matrix3x3 m(q);
         m.getRPY(roll, pitch, yaw);
 
         Json::Value root;
@@ -529,17 +550,17 @@ public:
         Json::Value K(Json::arrayValue);
         Json::Value R(Json::arrayValue);
         Json::Value P(Json::arrayValue);
-        for(int i = 0; i < msg->D.size(); i++){
-            D.append(msg->D.at(i));
+        for(int i = 0; i < msg->d.size(); i++){
+            D.append(msg->d.at(i));
         }
-        for(int i = 0; i < msg->K.size(); i++){
-            K.append(msg->K.at(i));
+        for(int i = 0; i < msg->k.size(); i++){
+            K.append(msg->k.at(i));
         }
-        for(int i = 0; i < msg->R.size(); i++){
-            R.append(msg->R.at(i));
+        for(int i = 0; i < msg->r.size(); i++){
+            R.append(msg->r.at(i));
         }
-        for(int i = 0; i < msg->P.size(); i++){
-            P.append(msg->P.at(i));
+        for(int i = 0; i < msg->p.size(); i++){
+            P.append(msg->p.at(i));
         }
         root["D"] = D;
         root["K"] = K;
@@ -565,14 +586,13 @@ public:
 
         std::lock_guard<std::mutex> lock(cameraColorConfigMsgCountMtxs.at(index));
         cameraColorConfigMsgCounts.at(index) += 1;
-        subCameraColorConfigs.at(index).shutdown();
+        subCameraColorConfigs.at(index).reset();
     }
 
-    void cameraDepthConfigHandler(const sensor_msgs::CameraInfo::ConstPtr& msg, const int& index){
+    void cameraDepthConfigHandler(const sensor_msgs::msg::CameraInfo::SharedPtr& msg, const int& index){
         if(cameraDepthFrameIds.at(index) == "")
             return;
-        tf::TransformListener listener;
-		tf::StampedTransform transform;
+        geometry_msgs::msg::TransformStamped transform;
 		while(cameraDepthFrameIds.at(index) != ""){
             if(captureStopMtx.try_lock()){
                 bool stop = captureStop;
@@ -581,20 +601,18 @@ public:
                     break;
             }
             try {
-                listener.waitForTransform(cameraDepthParentFrames.at(index), cameraDepthFrameIds.at(index), ros::Time(0), ros::Duration(3.0));
-                listener.lookupTransform(cameraDepthParentFrames.at(index), cameraDepthFrameIds.at(index), ros::Time(0), transform);
+                transform = tfBuffer->lookupTransform(cameraDepthParentFrames.at(index), cameraDepthFrameIds.at(index), tf2::TimePointZero);
                 break;
-            } catch (tf::TransformException &ex) {
-                ros::Duration(1.0).sleep();
+            } catch (const tf2::TransformException & ex) {
                 continue;
             }
 		}
-		double x = transform.getOrigin().x();
-        double y = transform.getOrigin().y();
-        double z = transform.getOrigin().z();
+		double x = transform.transform.translation.x;
+        double y = transform.transform.translation.y;
+        double z = transform.transform.translation.z;
         double roll, pitch, yaw;
-        tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(), transform.getRotation().w());
-        tf::Matrix3x3 m(q);
+        tf2::Quaternion q(transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z, transform.transform.rotation.w);
+        tf2::Matrix3x3 m(q);
         m.getRPY(roll, pitch, yaw);
 
         Json::Value root;
@@ -605,17 +623,17 @@ public:
         Json::Value K(Json::arrayValue);
         Json::Value R(Json::arrayValue);
         Json::Value P(Json::arrayValue);
-        for(int i = 0; i < msg->D.size(); i++){
-            D.append(msg->D.at(i));
+        for(int i = 0; i < msg->d.size(); i++){
+            D.append(msg->d.at(i));
         }
-        for(int i = 0; i < msg->K.size(); i++){
-            K.append(msg->K.at(i));
+        for(int i = 0; i < msg->k.size(); i++){
+            K.append(msg->k.at(i));
         }
-        for(int i = 0; i < msg->R.size(); i++){
-            R.append(msg->R.at(i));
+        for(int i = 0; i < msg->r.size(); i++){
+            R.append(msg->r.at(i));
         }
-        for(int i = 0; i < msg->P.size(); i++){
-            P.append(msg->P.at(i));
+        for(int i = 0; i < msg->p.size(); i++){
+            P.append(msg->p.at(i));
         }
         root["D"] = D;
         root["K"] = K;
@@ -641,14 +659,13 @@ public:
 
         std::lock_guard<std::mutex> lock(cameraDepthConfigMsgCountMtxs.at(index));
         cameraDepthConfigMsgCounts.at(index) += 1;
-        subCameraDepthConfigs.at(index).shutdown();
+        subCameraDepthConfigs.at(index).reset();
     }
 
-    void cameraPointCloudConfigHandler(const sensor_msgs::CameraInfo::ConstPtr& msg, const int& index){
+    void cameraPointCloudConfigHandler(const sensor_msgs::msg::CameraInfo::SharedPtr& msg, const int& index){
         if(cameraPointCloudFrameIds.at(index) == "")
             return;
-        tf::TransformListener listener;
-		tf::StampedTransform transform;
+        geometry_msgs::msg::TransformStamped transform;
 		while(cameraPointCloudFrameIds.at(index) != ""){
             if(captureStopMtx.try_lock()){
                 bool stop = captureStop;
@@ -657,20 +674,18 @@ public:
                     break;
             }
             try {
-                listener.waitForTransform(cameraPointCloudParentFrames.at(index), cameraPointCloudFrameIds.at(index), ros::Time(0), ros::Duration(3.0));
-                listener.lookupTransform(cameraPointCloudParentFrames.at(index), cameraPointCloudFrameIds.at(index), ros::Time(0), transform);
+                transform = tfBuffer->lookupTransform(cameraPointCloudParentFrames.at(index), cameraPointCloudFrameIds.at(index), tf2::TimePointZero);
                 break;
-            } catch (tf::TransformException &ex) {
-                ros::Duration(1.0).sleep();
+            } catch (const tf2::TransformException & ex) {
                 continue;
             }
 		}
-		double x = transform.getOrigin().x();
-        double y = transform.getOrigin().y();
-        double z = transform.getOrigin().z();
+		double x = transform.transform.translation.x;
+        double y = transform.transform.translation.y;
+        double z = transform.transform.translation.z;
         double roll, pitch, yaw;
-        tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(), transform.getRotation().w());
-        tf::Matrix3x3 m(q);
+        tf2::Quaternion q(transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z, transform.transform.rotation.w);
+        tf2::Matrix3x3 m(q);
         m.getRPY(roll, pitch, yaw);
 
         Json::Value root;
@@ -681,17 +696,17 @@ public:
         Json::Value K(Json::arrayValue);
         Json::Value R(Json::arrayValue);
         Json::Value P(Json::arrayValue);
-        for(int i = 0; i < msg->D.size(); i++){
-            D.append(msg->D.at(i));
+        for(int i = 0; i < msg->d.size(); i++){
+            D.append(msg->d.at(i));
         }
-        for(int i = 0; i < msg->K.size(); i++){
-            K.append(msg->K.at(i));
+        for(int i = 0; i < msg->k.size(); i++){
+            K.append(msg->k.at(i));
         }
-        for(int i = 0; i < msg->R.size(); i++){
-            R.append(msg->R.at(i));
+        for(int i = 0; i < msg->r.size(); i++){
+            R.append(msg->r.at(i));
         }
-        for(int i = 0; i < msg->P.size(); i++){
-            P.append(msg->P.at(i));
+        for(int i = 0; i < msg->p.size(); i++){
+            P.append(msg->p.at(i));
         }
         root["D"] = D;
         root["K"] = K;
@@ -717,101 +732,101 @@ public:
 
         std::lock_guard<std::mutex> lock(cameraPointCloudConfigMsgCountMtxs.at(index));
         cameraPointCloudConfigMsgCounts.at(index) += 1;
-        subCameraPointCloudConfigs.at(index).shutdown();
+        subCameraPointCloudConfigs.at(index).reset();
     }
 
-    void armJointStateHandler(const sensor_msgs::JointState::ConstPtr& msg, const int& index){
+    void armJointStateHandler(const sensor_msgs::msg::JointState::SharedPtr& msg, const int& index){
         armJointStateMsgDeques.at(index).push_back(*msg);
         std::lock_guard<std::mutex> lock(armJointStateMsgCountMtxs.at(index));
         if(armJointStateMsgCounts.at(index) == 0){
-            armJointStateStartTimeStamps.at(index) = msg->header.stamp.toSec();
+            armJointStateStartTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }else{
-            armJointStateLastTimeStamps.at(index) = msg->header.stamp.toSec();
+            armJointStateLastTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }
         armJointStateMsgCounts.at(index) += 1;
     }
 
-    void armEndPoseHandler(const geometry_msgs::PoseStamped::ConstPtr& msg, const int& index){
+    void armEndPoseHandler(const geometry_msgs::msg::PoseStamped::SharedPtr& msg, const int& index){
         armEndPoseMsgDeques.at(index).push_back(*msg);
         std::lock_guard<std::mutex> lock(armEndPoseMsgCountMtxs.at(index));
         if(armEndPoseMsgCounts.at(index) == 0){
-            armEndPoseStartTimeStamps.at(index) = msg->header.stamp.toSec();
+            armEndPoseStartTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }else{
-            armEndPoseLastTimeStamps.at(index) = msg->header.stamp.toSec();
+            armEndPoseLastTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }
         armEndPoseMsgCounts.at(index) += 1;
     }
 
-    void localizationPoseHandler(const geometry_msgs::PoseStamped::ConstPtr& msg, const int& index){
+    void localizationPoseHandler(const geometry_msgs::msg::PoseStamped::SharedPtr& msg, const int& index){
         localizationPoseMsgDeques.at(index).push_back(*msg);
         std::lock_guard<std::mutex> lock(localizationPoseMsgCountMtxs.at(index));
         if(localizationPoseMsgCounts.at(index) == 0){
-            localizationPoseStartTimeStamps.at(index) = msg->header.stamp.toSec();
+            localizationPoseStartTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }else{
-            localizationPoseLastTimeStamps.at(index) = msg->header.stamp.toSec();
+            localizationPoseLastTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }
         localizationPoseMsgCounts.at(index) += 1;
     }
 
-    void gripperEncoderHandler(const data_msgs::Gripper::ConstPtr& msg, const int& index){
+    void gripperEncoderHandler(const data_msgs::msg::Gripper::SharedPtr& msg, const int& index){
         gripperEncoderMsgDeques.at(index).push_back(*msg);
         std::lock_guard<std::mutex> lock(gripperEncoderMsgCountMtxs.at(index));
         if(gripperEncoderMsgCounts.at(index) == 0){
-            gripperEncoderStartTimeStamps.at(index) = msg->header.stamp.toSec();
+            gripperEncoderStartTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }else{
-            gripperEncoderLastTimeStamps.at(index) = msg->header.stamp.toSec();
+            gripperEncoderLastTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }
         gripperEncoderMsgCounts.at(index) += 1;
     }
 
-    void imu9AxisHandler(const sensor_msgs::Imu::ConstPtr& msg, const int& index){
+    void imu9AxisHandler(const sensor_msgs::msg::Imu::SharedPtr& msg, const int& index){
         imu9AxisMsgDeques.at(index).push_back(*msg);
         std::lock_guard<std::mutex> lock(imu9AxisMsgCountMtxs.at(index));
         if(imu9AxisMsgCounts.at(index) == 0){
-            imu9AxisStartTimeStamps.at(index) = msg->header.stamp.toSec();
+            imu9AxisStartTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }else{
-            imu9AxisLastTimeStamps.at(index) = msg->header.stamp.toSec();
+            imu9AxisLastTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }
         imu9AxisMsgCounts.at(index) += 1;
     }
 
-    void lidarPointCloudHandler(const sensor_msgs::PointCloud2::ConstPtr& msg, const int& index){
+    void lidarPointCloudHandler(const sensor_msgs::msg::PointCloud2::SharedPtr& msg, const int& index){
         lidarPointCloudMsgDeques.at(index).push_back(*msg);
         std::lock_guard<std::mutex> lock(lidarPointCloudMsgCountMtxs.at(index));
         if(lidarPointCloudMsgCounts.at(index) == 0){
-            lidarPointCloudStartTimeStamps.at(index) = msg->header.stamp.toSec();
+            lidarPointCloudStartTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }else{
-            lidarPointCloudLastTimeStamps.at(index) = msg->header.stamp.toSec();
+            lidarPointCloudLastTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }
         lidarPointCloudMsgCounts.at(index) += 1;
     }
 
-    void robotBaseVelHandler(const nav_msgs::Odometry::ConstPtr& msg, const int& index){
+    void robotBaseVelHandler(const nav_msgs::msg::Odometry::SharedPtr& msg, const int& index){
         robotBaseVelMsgDeques.at(index).push_back(*msg);
         std::lock_guard<std::mutex> lock(robotBaseVelMsgCountMtxs.at(index));
         if(robotBaseVelMsgCounts.at(index) == 0){
-            robotBaseVelStartTimeStamps.at(index) = msg->header.stamp.toSec();
+            robotBaseVelStartTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }else{
-            robotBaseVelLastTimeStamps.at(index) = msg->header.stamp.toSec();
+            robotBaseVelLastTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }
         robotBaseVelMsgCounts.at(index) += 1;
     }
 
     #ifdef _USELIFT
-    void liftMotorHandler(const bt_task_msgs::LiftMotorMsg::ConstPtr& msg, const int& index){
+    void liftMotorHandler(const bt_task_msgs::msg::LiftMotorMsg::SharedPtr& msg, const int& index){
         liftMotorMsgDeques.at(index).push_back(*msg);
         std::lock_guard<std::mutex> lock(liftMotorMsgCountMtxs.at(index));
         if(liftMotorMsgCounts.at(index) == 0){
-            liftMotorStartTimeStamps.at(index) = msg->header.stamp.toSec();
+            liftMotorStartTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }else{
-            liftMotorLastTimeStamps.at(index) = msg->header.stamp.toSec();
+            liftMotorLastTimeStamps.at(index) = rclcpp::Time(msg->header.stamp).seconds();
         }
         liftMotorMsgCounts.at(index) += 1;
     }
     #endif
 
     void cameraColorSaving(const int index){
-        ros::Rate rate = ros::Rate(100);
+        rclcpp::Rate rate(100);
         bool quit = false;
         while(true){
             if(captureStopMtx.try_lock()){
@@ -820,16 +835,16 @@ public:
                 if(stop && cameraColorMsgDeques.at(index).size() == 0)
                     break;
             }
-            if(cameraColorMsgDeques.at(index).back().header.stamp.toSec() == 0){
+            if(rclcpp::Time(cameraColorMsgDeques.at(index).back().header.stamp).seconds() == 0){
                 quit = true;
                 cameraColorMsgDeques.at(index).pop_back();
             }
-            if(quit && (cameraColorMsgDeques.at(index).size() == 0 || cameraColorMsgDeques.at(index).back().header.stamp.toSec() - cameraColorMsgDeques.at(index).front().header.stamp.toSec() <= cropTime))
+            if(quit && (cameraColorMsgDeques.at(index).size() == 0 || rclcpp::Time(cameraColorMsgDeques.at(index).back().header.stamp).seconds() - rclcpp::Time(cameraColorMsgDeques.at(index).front().header.stamp).seconds() <= cropTime))
                 break;
-            if(quit || cameraColorMsgDeques.at(index).back().header.stamp.toSec() - cameraColorMsgDeques.at(index).front().header.stamp.toSec() > cropTime){
-                sensor_msgs::Image msg = cameraColorMsgDeques.at(index).pop_front();
+            if(quit || rclcpp::Time(cameraColorMsgDeques.at(index).back().header.stamp).seconds() - rclcpp::Time(cameraColorMsgDeques.at(index).front().header.stamp).seconds() > cropTime){
+                sensor_msgs::msg::Image msg = cameraColorMsgDeques.at(index).pop_front();
                 cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-                cv::imwrite(cameraColorDirs.at(index) + "/" + std::to_string(msg.header.stamp.toSec()) + ".jpg", cv_ptr->image);
+                cv::imwrite(cameraColorDirs.at(index) + "/" + std::to_string(rclcpp::Time(msg.header.stamp).seconds()) + ".jpg", cv_ptr->image);
             }else{
                 rate.sleep();
             }
@@ -837,7 +852,7 @@ public:
     }
 
     void cameraDepthSaving(const int index){
-        ros::Rate rate = ros::Rate(100);
+        rclcpp::Rate rate(100);
         bool quit = false;
         while(true){
             if(captureStopMtx.try_lock()){
@@ -846,16 +861,16 @@ public:
                 if(stop && cameraDepthMsgDeques.at(index).size() == 0)
                     break;
             }
-            if(cameraDepthMsgDeques.at(index).back().header.stamp.toSec() == 0){
+            if(rclcpp::Time(cameraDepthMsgDeques.at(index).back().header.stamp).seconds() == 0){
                 quit = true;
                 cameraDepthMsgDeques.at(index).pop_back();
             }
-            if(quit && (cameraDepthMsgDeques.at(index).size() == 0 || cameraDepthMsgDeques.at(index).back().header.stamp.toSec() - cameraDepthMsgDeques.at(index).front().header.stamp.toSec() <= cropTime))
+            if(quit && (cameraDepthMsgDeques.at(index).size() == 0 || rclcpp::Time(cameraDepthMsgDeques.at(index).back().header.stamp).seconds() - rclcpp::Time(cameraDepthMsgDeques.at(index).front().header.stamp).seconds() <= cropTime))
                 break;
-            if(quit || cameraDepthMsgDeques.at(index).back().header.stamp.toSec() - cameraDepthMsgDeques.at(index).front().header.stamp.toSec() > cropTime){
-                sensor_msgs::Image msg = cameraDepthMsgDeques.at(index).pop_front();
+            if(quit || rclcpp::Time(cameraDepthMsgDeques.at(index).back().header.stamp).seconds() - rclcpp::Time(cameraDepthMsgDeques.at(index).front().header.stamp).seconds() > cropTime){
+                sensor_msgs::msg::Image msg = cameraDepthMsgDeques.at(index).pop_front();
                 cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_16UC1);
-                cv::imwrite(cameraDepthDirs.at(index) + "/" + std::to_string(msg.header.stamp.toSec()) + ".png", cv_ptr->image);
+                cv::imwrite(cameraDepthDirs.at(index) + "/" + std::to_string(rclcpp::Time(msg.header.stamp).seconds()) + ".png", cv_ptr->image);
             }else{
                 rate.sleep();
             }
@@ -863,7 +878,7 @@ public:
     }
 
     void cameraPointCloudSaving(const int index){
-        ros::Rate rate = ros::Rate(100);
+        rclcpp::Rate rate(100);
         bool quit = false;
         while(true){
             if(captureStopMtx.try_lock()){
@@ -872,14 +887,14 @@ public:
                 if(stop && cameraPointCloudMsgDeques.at(index).size() == 0)
                     break;
             }
-            if(cameraPointCloudMsgDeques.at(index).back().header.stamp.toSec() == 0){
+            if(rclcpp::Time(cameraPointCloudMsgDeques.at(index).back().header.stamp).seconds() == 0){
                 quit = true;
                 cameraPointCloudMsgDeques.at(index).pop_back();
             }
-            if(quit && (cameraPointCloudMsgDeques.at(index).size() == 0 || cameraPointCloudMsgDeques.at(index).back().header.stamp.toSec() - cameraPointCloudMsgDeques.at(index).front().header.stamp.toSec() <= cropTime))
+            if(quit && (cameraPointCloudMsgDeques.at(index).size() == 0 || rclcpp::Time(cameraPointCloudMsgDeques.at(index).back().header.stamp).seconds() - rclcpp::Time(cameraPointCloudMsgDeques.at(index).front().header.stamp).seconds() <= cropTime))
                     break;
-            if(quit || cameraPointCloudMsgDeques.at(index).back().header.stamp.toSec() - cameraPointCloudMsgDeques.at(index).front().header.stamp.toSec() > cropTime){
-                sensor_msgs::PointCloud2 msg = cameraPointCloudMsgDeques.at(index).pop_front();
+            if(quit || rclcpp::Time(cameraPointCloudMsgDeques.at(index).back().header.stamp).seconds() - rclcpp::Time(cameraPointCloudMsgDeques.at(index).front().header.stamp).seconds() > cropTime){
+                sensor_msgs::msg::PointCloud2 msg = cameraPointCloudMsgDeques.at(index).pop_front();
                 pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointCloud(new pcl::PointCloud<pcl::PointXYZRGB>());
                 pcl::fromROSMsg(msg, *pointCloud);
 
@@ -905,40 +920,7 @@ public:
                     *pointCloudDownSize = *pointCloudNorm;
                 }
 
-                // auto start = std::chrono::high_resolution_clock::now();
-
-                // std::stringstream compressedData;
-                // pcl::io::OctreePointCloudCompression<pcl::PointXYZRGB>* compression = new pcl::io::OctreePointCloudCompression<pcl::PointXYZRGB>(
-                //     pcl::io::MANUAL_CONFIGURATION,			// 定义压缩配置文件
-                //     false,									// 是否打印压缩统计信息
-                //     0.001,									// 点坐标的精度
-                //     0.001,									// 最低八叉树级别的八叉树分辨率，即八叉树最低层级的体素块的边长
-                //     false,									// 点云压缩前，是否进行体素网格过滤
-                //     100,									// 点云压缩模式对点云进行差分编码压缩，用这种方法对新引入的点云和之前编码的点云之间的差分进行编码，以便获得最大压缩性能，iFrameRate_arg指定了一个速率，如果数据流中的帧速率低于这个速率则不进行差分编码压缩
-                //     true,									// 是否对颜色编码进行压缩
-                //     8										// 每一个颜色编码所占的位数
-                // );
-                // compression->encodePointCloud(pointCloudDownSize, compressedData);
-                // std::string dir = cameraPointCloudDirs.at(index) + "/" + std::to_string(msg.header.stamp.toSec()) + ".compressed.bin";
-                // compressedData.write(dir.c_str(), sizeof(compressedData));								// 将压缩点云的文件结果写到bin文件中
-                // std::ofstream file(cameraPointCloudDirs.at(index) + "/" + std::to_string(msg.header.stamp.toSec()) + ".bin");
-                // if (file.is_open()) {
-                //     // 将字符串写入文件
-                //     file << compressedData.str();
-                //     file.close(); // 关闭文件流
-                // } else {
-                //     std::cerr << "Unable to open file";
-                // }
-
-                // auto end = std::chrono::high_resolution_clock::now();
-
-                // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-
-                // std::cout << "函数运行时间: " << duration << " 微秒" << std::endl;
-
-                pcl::io::savePCDFileBinary(cameraPointCloudDirs.at(index) + "/" + std::to_string(msg.header.stamp.toSec()) + ".pcd", *pointCloudDownSize);
-            }else{
-                rate.sleep();
+                pcl::io::savePCDFileBinary(cameraPointCloudDirs.at(index) + "/" + std::to_string(rclcpp::Time(msg.header.stamp).seconds()) + ".pcd", *pointCloudDownSize);
             }
         }
     }
@@ -951,8 +933,8 @@ public:
                 if(stop && armJointStateMsgDeques.at(index).size() == 0)
                     break;
             }
-            sensor_msgs::JointState msg = armJointStateMsgDeques.at(index).pop_front();
-            if(msg.header.stamp.toSec() == 0)
+            sensor_msgs::msg::JointState msg = armJointStateMsgDeques.at(index).pop_front();
+            if(rclcpp::Time(msg.header.stamp).seconds() == 0)
                 break;
             Json::Value root;
             Json::Value effort(Json::arrayValue);
@@ -971,7 +953,7 @@ public:
             root["position"] = position;
             root["velocity"] = velocity;
             Json::StyledStreamWriter streamWriter;
-            std::ofstream file(armJointStateDirs.at(index) + "/" + std::to_string(msg.header.stamp.toSec()) + ".json");
+            std::ofstream file(armJointStateDirs.at(index) + "/" + std::to_string(rclcpp::Time(msg.header.stamp).seconds()) + ".json");
             streamWriter.write(file, root);
             file.close();
         }
@@ -985,21 +967,22 @@ public:
                 if(stop && armEndPoseMsgDeques.at(index).size() == 0)
                     break;
             }
-            geometry_msgs::PoseStamped msg = armEndPoseMsgDeques.at(index).pop_front();
-            if(msg.header.stamp.toSec() == 0)
+            geometry_msgs::msg::PoseStamped msg = armEndPoseMsgDeques.at(index).pop_front();
+            if(rclcpp::Time(msg.header.stamp).seconds() == 0)
                 break;
             Json::Value root;
             if(armEndPoseOrients.at(index)){
                 root["x"] = msg.pose.position.x;
                 root["y"] = msg.pose.position.y;
                 root["z"] = msg.pose.position.z;
-                tf::Quaternion quat;
-                tf::quaternionMsgToTF(msg.pose.orientation, quat);
+                tf2::Quaternion quat;
+                tf2::fromMsg(msg.pose.orientation, quat);
+                tf2::Matrix3x3 matrix(quat);
                 double roll, pitch, yaw;
-                tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
+                matrix.getRPY(roll, pitch, yaw);
                 root["roll"] = roll;
                 root["pitch"] = pitch;
-                root["yaw"] = yaw;
+                root["yaw"] = yaw; 
             }else{
                 root["x"] = msg.pose.position.x;
                 root["y"] = msg.pose.position.y;
@@ -1010,7 +993,7 @@ public:
                 root["grasper"] = msg.pose.orientation.w;
             }
             Json::StyledStreamWriter streamWriter;
-            std::ofstream file(armEndPoseDirs.at(index) + "/" + std::to_string(msg.header.stamp.toSec()) + ".json");
+            std::ofstream file(armEndPoseDirs.at(index) + "/" + std::to_string(rclcpp::Time(msg.header.stamp).seconds()) + ".json");
             streamWriter.write(file, root);
             file.close();
         }
@@ -1024,22 +1007,23 @@ public:
                 if(stop && localizationPoseMsgDeques.at(index).size() == 0)
                     break;
             }
-            geometry_msgs::PoseStamped msg = localizationPoseMsgDeques.at(index).pop_front();
-            if(msg.header.stamp.toSec() == 0)
+            geometry_msgs::msg::PoseStamped msg = localizationPoseMsgDeques.at(index).pop_front();
+            if(rclcpp::Time(msg.header.stamp).seconds() == 0)
                 break;
             Json::Value root;
             root["x"] = msg.pose.position.x;
             root["y"] = msg.pose.position.y;
             root["z"] = msg.pose.position.z;
-            tf::Quaternion quat;
-            tf::quaternionMsgToTF(msg.pose.orientation, quat);
+            tf2::Quaternion quat;
+            tf2::fromMsg(msg.pose.orientation, quat);
+            tf2::Matrix3x3 matrix(quat);
             double roll, pitch, yaw;
-            tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
+            matrix.getRPY(roll, pitch, yaw);
             root["roll"] = roll;
             root["pitch"] = pitch;
-            root["yaw"] = yaw;
+            root["yaw"] = yaw;            
             Json::StyledStreamWriter streamWriter;
-            std::ofstream file(localizationPoseDirs.at(index) + "/" + std::to_string(msg.header.stamp.toSec()) + ".json");
+            std::ofstream file(localizationPoseDirs.at(index) + "/" + std::to_string(rclcpp::Time(msg.header.stamp).seconds()) + ".json");
             streamWriter.write(file, root);
             file.close();
         }
@@ -1053,14 +1037,14 @@ public:
                 if(stop && gripperEncoderMsgDeques.at(index).size() == 0)
                     break;
             }
-            data_msgs::Gripper msg = gripperEncoderMsgDeques.at(index).pop_front();
-            if(msg.header.stamp.toSec() == 0)
+            data_msgs::msg::Gripper msg = gripperEncoderMsgDeques.at(index).pop_front();
+            if(rclcpp::Time(msg.header.stamp).seconds() == 0)
                 break;
             Json::Value root;
             root["angle"] = msg.angle;
             root["distance"] = msg.distance;
             Json::StyledStreamWriter streamWriter;
-            std::ofstream file(gripperEncoderDirs.at(index) + "/" + std::to_string(msg.header.stamp.toSec()) + ".json");
+            std::ofstream file(gripperEncoderDirs.at(index) + "/" + std::to_string(rclcpp::Time(msg.header.stamp).seconds()) + ".json");
             streamWriter.write(file, root);
             file.close();
         }
@@ -1074,8 +1058,8 @@ public:
                 if(stop && imu9AxisMsgDeques.at(index).size() == 0)
                     break;
             }
-            sensor_msgs::Imu msg = imu9AxisMsgDeques.at(index).pop_front();
-            if(msg.header.stamp.toSec() == 0)
+            sensor_msgs::msg::Imu msg = imu9AxisMsgDeques.at(index).pop_front();
+            if(rclcpp::Time(msg.header.stamp).seconds() == 0)
                 break;
             Json::Value root;
             root["orientation"]["x"] = msg.orientation.x;
@@ -1089,7 +1073,7 @@ public:
             root["linear_acceleration"]["y"] = msg.linear_acceleration.y;
             root["linear_acceleration"]["z"] = msg.linear_acceleration.z;
             Json::StyledStreamWriter streamWriter;
-            std::ofstream file(imu9AxisDirs.at(index) + "/" + std::to_string(msg.header.stamp.toSec()) + ".json");
+            std::ofstream file(imu9AxisDirs.at(index) + "/" + std::to_string(rclcpp::Time(msg.header.stamp).seconds()) + ".json");
             streamWriter.write(file, root);
             file.close();
         }
@@ -1103,8 +1087,8 @@ public:
                 if(stop && lidarPointCloudMsgDeques.at(index).size() == 0)
                     break;
             }
-            sensor_msgs::PointCloud2 msg = lidarPointCloudMsgDeques.at(index).pop_front();
-            if(msg.header.stamp.toSec() == 0)
+            sensor_msgs::msg::PointCloud2 msg = lidarPointCloudMsgDeques.at(index).pop_front();
+            if(rclcpp::Time(msg.header.stamp).seconds() == 0)
                 break;
             pcl::PointCloud<pcl::PointXYZI>::Ptr pointCloud(new pcl::PointCloud<pcl::PointXYZI>());
             pcl::fromROSMsg(msg, *pointCloud);
@@ -1132,7 +1116,7 @@ public:
                 *pointCloudDownSize = *pointCloudNorm;
             }
 
-            pcl::io::savePCDFileBinary(lidarPointCloudDirs.at(index) + "/" + std::to_string(msg.header.stamp.toSec()) + ".pcd", *pointCloudDownSize);
+            pcl::io::savePCDFileBinary(lidarPointCloudDirs.at(index) + "/" + std::to_string(rclcpp::Time(msg.header.stamp).seconds()) + ".pcd", *pointCloudDownSize);
         }
     }
 
@@ -1144,15 +1128,15 @@ public:
                 if(stop && robotBaseVelMsgDeques.at(index).size() == 0)
                     break;
             }
-            nav_msgs::Odometry msg = robotBaseVelMsgDeques.at(index).pop_front();
-            if(msg.header.stamp.toSec() == 0)
+            nav_msgs::msg::Odometry msg = robotBaseVelMsgDeques.at(index).pop_front();
+            if(rclcpp::Time(msg.header.stamp).seconds() == 0)
                 break;
             Json::Value root;
             root["linear"]["x"] = msg.twist.twist.linear.x;
             root["linear"]["y"] = msg.twist.twist.linear.y;
             root["angular"]["z"] = msg.twist.twist.angular.z;
             Json::StyledStreamWriter streamWriter;
-            std::ofstream file(robotBaseVelDirs.at(index) + "/" + std::to_string(msg.header.stamp.toSec()) + ".json");
+            std::ofstream file(robotBaseVelDirs.at(index) + "/" + std::to_string(rclcpp::Time(msg.header.stamp).seconds()) + ".json");
             streamWriter.write(file, root);
             file.close();
         }
@@ -1167,24 +1151,24 @@ public:
                 if(stop && liftMotorMsgDeques.at(index).size() == 0)
                     break;
             }
-            bt_task_msgs::LiftMotorMsg msg = liftMotorMsgDeques.at(index).pop_front();
-            if(msg.header.stamp.toSec() == 0)
+            bt_task_msgs::msg::LiftMotorMsg msg = liftMotorMsgDeques.at(index).pop_front();
+            if(rclcpp::Time(msg.header.stamp).seconds() == 0)
                 break;
             Json::Value root;
             root["backHeight"] = msg.backHeight;
             Json::StyledStreamWriter streamWriter;
-            std::ofstream file(liftMotorDirs.at(index) + "/" + std::to_string(msg.header.stamp.toSec()) + ".json");
+            std::ofstream file(liftMotorDirs.at(index) + "/" + std::to_string(rclcpp::Time(msg.header.stamp).seconds()) + ".json");
             streamWriter.write(file, root);
             file.close();
         }
     }
     #endif
 
+
     void tfTransformSaving(const int index){
-        tf::TransformListener listener;
-		tf::StampedTransform transform;
+        geometry_msgs::msg::TransformStamped transform;
         bool getFrame = false;
-		while(ros::ok()){
+		while(rclcpp::ok()){
             if(captureStopMtx.try_lock()){
                 bool stop = captureStop;
                 captureStopMtx.unlock();
@@ -1192,22 +1176,20 @@ public:
                     break;
             }
             try {
-                listener.waitForTransform(tfTransformParentFrames.at(index), tfTransformChildFrames.at(index), ros::Time(0), ros::Duration(3.0));
-                listener.lookupTransform(tfTransformParentFrames.at(index), tfTransformChildFrames.at(index), ros::Time(0), transform);
+                transform = tfBuffer->lookupTransform(tfTransformParentFrames.at(index), tfTransformChildFrames.at(index), tf2::TimePointZero);
                 getFrame = true;
                 break;
-            } catch (tf::TransformException &ex) {
-                ros::Duration(1.0).sleep();
+            } catch (const tf2::TransformException & ex) {
                 continue;
             }
 		}
         if(getFrame){
-            double x = transform.getOrigin().x();
-            double y = transform.getOrigin().y();
-            double z = transform.getOrigin().z();
+            double x = transform.transform.translation.x;
+            double y = transform.transform.translation.y;
+            double z = transform.transform.translation.z;
             double roll, pitch, yaw;
-            tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(), transform.getRotation().w());
-            tf::Matrix3x3 m(q);
+            tf2::Quaternion q(transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z, transform.transform.rotation.w);
+            tf2::Matrix3x3 m(q);
             m.getRPY(roll, pitch, yaw);
 
             Json::Value root;
@@ -1265,6 +1247,15 @@ public:
         file.close();
     }
 
+    // void keyboardInterruptChecking(){
+    //     std::string line;
+    //     rclcpp::Rate rate(10);
+    //     while (rclcpp::ok()) {
+    //         rate.sleep();
+    //     }
+    //     shutdown();
+    // }
+
     void keyboardInterruptChecking(){
         std::string line;
         if (std::getline(std::cin, line)) {
@@ -1277,79 +1268,79 @@ public:
         captureStop = true;
         captureStopMtx.unlock();
         for(int i = 0; i < cameraColorNames.size(); i++){
-            subCameraColors.at(i).shutdown();
-            sensor_msgs::Image msg;
-            msg.header.stamp = ros::Time().fromSec(0);
+            subCameraColors.at(i).reset();
+            sensor_msgs::msg::Image msg;
+            msg.header.stamp = rclcpp::Time(0);
             cameraColorMsgDeques.at(i).push_back(msg);
         }
         for(int i = 0; i < cameraDepthNames.size(); i++){
-            subCameraDepths.at(i).shutdown();
-            sensor_msgs::Image msg;
-            msg.header.stamp = ros::Time().fromSec(0);
+            subCameraDepths.at(i).reset();
+            sensor_msgs::msg::Image msg;
+            msg.header.stamp = rclcpp::Time(0);
             cameraDepthMsgDeques.at(i).push_back(msg);
         }
         for(int i = 0; i < cameraPointCloudNames.size(); i++){
-            subCameraPointClouds.at(i).shutdown();
-            sensor_msgs::PointCloud2 msg;
-            msg.header.stamp = ros::Time().fromSec(0);
+            subCameraPointClouds.at(i).reset();
+            sensor_msgs::msg::PointCloud2 msg;
+            msg.header.stamp = rclcpp::Time(0);
             cameraPointCloudMsgDeques.at(i).push_back(msg);
         }
         for(int i = 0; i < armJointStateNames.size(); i++){
-            subArmJointStates.at(i).shutdown();
-            sensor_msgs::JointState msg;
-            msg.header.stamp = ros::Time().fromSec(0);
+            subArmJointStates.at(i).reset();
+            sensor_msgs::msg::JointState msg;
+            msg.header.stamp = rclcpp::Time(0);
             armJointStateMsgDeques.at(i).push_back(msg);
         }
         for(int i = 0; i < armEndPoseNames.size(); i++){
-            subArmEndPoses.at(i).shutdown();
-            geometry_msgs::PoseStamped msg;
-            msg.header.stamp = ros::Time().fromSec(0);
+            subArmEndPoses.at(i).reset();
+            geometry_msgs::msg::PoseStamped msg;
+            msg.header.stamp = rclcpp::Time(0);
             armEndPoseMsgDeques.at(i).push_back(msg);
         }
         for(int i = 0; i < localizationPoseNames.size(); i++){
-            subLocalizationPoses.at(i).shutdown();
-            geometry_msgs::PoseStamped msg;
-            msg.header.stamp = ros::Time().fromSec(0);
+            subLocalizationPoses.at(i).reset();
+            geometry_msgs::msg::PoseStamped msg;
+            msg.header.stamp = rclcpp::Time(0);
             localizationPoseMsgDeques.at(i).push_back(msg);
         }
         for(int i = 0; i < gripperEncoderNames.size(); i++){
-            subGripperEncoders.at(i).shutdown();
-            data_msgs::Gripper msg;
-            msg.header.stamp = ros::Time().fromSec(0);
+            subGripperEncoders.at(i).reset();
+            data_msgs::msg::Gripper msg;
+            msg.header.stamp = rclcpp::Time(0);
             gripperEncoderMsgDeques.at(i).push_back(msg);
         }
         for(int i = 0; i < imu9AxisNames.size(); i++){
-            subImu9Axiss.at(i).shutdown();
-            sensor_msgs::Imu msg;
-            msg.header.stamp = ros::Time().fromSec(0);
+            subImu9Axiss.at(i).reset();
+            sensor_msgs::msg::Imu msg;
+            msg.header.stamp = rclcpp::Time(0);
             imu9AxisMsgDeques.at(i).push_back(msg);
         }
         for(int i = 0; i < lidarPointCloudNames.size(); i++){
-            subLidarPointClouds.at(i).shutdown();
-            sensor_msgs::PointCloud2 msg;
-            msg.header.stamp = ros::Time().fromSec(0);
+            subLidarPointClouds.at(i).reset();
+            sensor_msgs::msg::PointCloud2 msg;
+            msg.header.stamp = rclcpp::Time(0);
             lidarPointCloudMsgDeques.at(i).push_back(msg);
         }
         for(int i = 0; i < robotBaseVelNames.size(); i++){
-            subRobotBaseVels.at(i).shutdown();
-            nav_msgs::Odometry msg;
-            msg.header.stamp = ros::Time().fromSec(0);
+            subRobotBaseVels.at(i).reset();
+            nav_msgs::msg::Odometry msg;
+            msg.header.stamp = rclcpp::Time(0);
             robotBaseVelMsgDeques.at(i).push_back(msg);
         }
         #ifdef _USELIFT
         for(int i = 0; i < liftMotorNames.size(); i++){
-            subLiftMotors.at(i).shutdown();
-            bt_task_msgs::LiftMotorMsg msg;
-            msg.header.stamp = ros::Time().fromSec(0);
+            subLiftMotors.at(i).reset();
+            bt_task_msgs::msg::LiftMotorMsg msg;
+            msg.header.stamp = rclcpp::Time(0);
             liftMotorMsgDeques.at(i).push_back(msg);
         }
         #endif
         if(!this->useService)
-            ros::shutdown();
+            rclcpp::shutdown();
     }
 
     void monitoring(){
-        ros::Rate rate = ros::Rate(1);
+        rclcpp::Rate rate(1);
         std::vector<int> cameraColorMsgLastCounts = std::vector<int>(cameraColorNames.size(), 0);
         std::vector<int> cameraDepthMsgLastCounts = std::vector<int>(cameraDepthNames.size(), 0);
         std::vector<int> cameraPointCloudMsgLastCounts = std::vector<int>(cameraPointCloudNames.size(), 0);
@@ -1372,8 +1363,8 @@ public:
         std::vector<double> lidarPointCloudMsgLastUpHzTimes = std::vector<double>(lidarPointCloudNames.size(), 0);
         std::vector<double> robotBaseVelMsgLastUpHzTimes = std::vector<double>(robotBaseVelNames.size(), 0);
         std::vector<double> liftMotorMsgLastUpHzTimes = std::vector<double>(liftMotorNames.size(), 0);
-        ros::Time beginTime = ros::Time::now();
-        data_msgs::CaptureStatus captureStatus;
+        rclcpp::Time beginTime = rclcpp::Clock().now();
+        data_msgs::msg::CaptureStatus captureStatus;
         while(true){
             captureStatus.topics.clear();
             captureStatus.count_in_seconds.clear();
@@ -1382,10 +1373,10 @@ public:
             std::ofstream file(statisticsDir);
             system("clear");
             std::cout<<"path: "<<episodeDir<<std::endl;
-            std::cout<<"total time: "<<(ros::Time::now() - beginTime).toSec()<<std::endl;
+            std::cout<<"total time: "<<(rclcpp::Clock().now() - beginTime).seconds()<<std::endl;
             int allCount = 0;
             std::cout<<"topic: frame in 1 second / total frame"<<std::endl;
-            file<<(ros::Time::now() - beginTime).toSec()<<std::endl;
+            file<<(rclcpp::Clock().now() - beginTime).seconds()<<std::endl;
             file<<"topic:"<<std::endl;
             for(int i = 0; i < cameraColorNames.size(); i++){
                 cameraColorMsgCountMtxs.at(i).lock();
@@ -1397,15 +1388,15 @@ public:
                 double frequency = ((double)count / (lastTime - startTime));
                 std::cout<<cameraColorTopics.at(i)<<": "<<countInSecond<<" / "<<count<<"("<<frequency<<"hz)"<<std::endl;
                 if(cameraColorMsgLastUpHzTimes.at(i) == 0){
-                    cameraColorMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    cameraColorMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 if(this->hz != -1 && countInSecond <= this->hz){
-                    if(ros::Time::now().toSec() - cameraColorMsgLastUpHzTimes.at(i) > this->timeout){
+                    if(rclcpp::Clock().now().seconds() - cameraColorMsgLastUpHzTimes.at(i) > this->timeout){
                         std::cout<<"Check the frequency of "<<cameraColorTopics.at(i)<<std::endl;
                         captureStatus.fail = true;
                     }
                 }else{
-                    cameraColorMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    cameraColorMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 cameraColorMsgLastCounts.at(i) = count;
                 allCount += count;
@@ -1424,15 +1415,15 @@ public:
                 double frequency = ((double)count / (lastTime - startTime));
                 std::cout<<cameraDepthTopics.at(i)<<": "<<countInSecond<<" / "<<count<<"("<<frequency<<"hz)"<<std::endl;
                 if(cameraDepthMsgLastUpHzTimes.at(i) == 0){
-                    cameraDepthMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    cameraDepthMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 if(this->hz != -1 && countInSecond <= this->hz){
-                    if(ros::Time::now().toSec() - cameraDepthMsgLastUpHzTimes.at(i) > this->timeout){
+                    if(rclcpp::Clock().now().seconds() - cameraDepthMsgLastUpHzTimes.at(i) > this->timeout){
                         std::cout<<"Check the frequency of "<<cameraDepthTopics.at(i)<<std::endl;
                         captureStatus.fail = true;
                     }
                 }else{
-                    cameraDepthMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    cameraDepthMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 cameraDepthMsgLastCounts.at(i) = count;
                 allCount += count;
@@ -1451,15 +1442,15 @@ public:
                 double frequency = ((double)count / (lastTime - startTime));
                 std::cout<<cameraPointCloudTopics.at(i)<<": "<<countInSecond<<" / "<<count<<"("<<frequency<<"hz)"<<std::endl;
                 if(cameraPointCloudMsgLastUpHzTimes.at(i) == 0){
-                    cameraPointCloudMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    cameraPointCloudMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 if(this->hz != -1 && countInSecond <= this->hz){
-                    if(ros::Time::now().toSec() - cameraPointCloudMsgLastUpHzTimes.at(i) > this->timeout){
+                    if(rclcpp::Clock().now().seconds() - cameraPointCloudMsgLastUpHzTimes.at(i) > this->timeout){
                         std::cout<<"Check the frequency of "<<cameraPointCloudTopics.at(i)<<std::endl;
                         captureStatus.fail = true;
                     }
                 }else{
-                    cameraPointCloudMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    cameraPointCloudMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 cameraPointCloudMsgLastCounts.at(i) = count;
                 allCount += count;
@@ -1478,15 +1469,15 @@ public:
                 double frequency = ((double)count / (lastTime - startTime));
                 std::cout<<armJointStateTopics.at(i)<<": "<<countInSecond<<" / "<<count<<"("<<frequency<<"hz)"<<std::endl;
                 if(armJointStateMsgLastUpHzTimes.at(i) == 0){
-                    armJointStateMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    armJointStateMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 if(this->hz != -1 && countInSecond <= this->hz){
-                    if(ros::Time::now().toSec() - armJointStateMsgLastUpHzTimes.at(i) > this->timeout){
+                    if(rclcpp::Clock().now().seconds() - armJointStateMsgLastUpHzTimes.at(i) > this->timeout){
                         std::cout<<"Check the frequency of "<<armJointStateTopics.at(i)<<std::endl;
                         captureStatus.fail = true;
                     }
                 }else{
-                    armJointStateMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    armJointStateMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 armJointStateMsgLastCounts.at(i) = count;
                 allCount += count;
@@ -1505,15 +1496,15 @@ public:
                 double frequency = ((double)count / (lastTime - startTime));
                 std::cout<<armEndPoseTopics.at(i)<<": "<<countInSecond<<" / "<<count<<"("<<frequency<<"hz)"<<std::endl;
                 if(armEndPoseMsgLastUpHzTimes.at(i) == 0){
-                    armEndPoseMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    armEndPoseMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 if(this->hz != -1 && countInSecond <= this->hz){
-                    if(ros::Time::now().toSec() - armEndPoseMsgLastUpHzTimes.at(i) > this->timeout){
+                    if(rclcpp::Clock().now().seconds() - armEndPoseMsgLastUpHzTimes.at(i) > this->timeout){
                         std::cout<<"Check the frequency of "<<armEndPoseTopics.at(i)<<std::endl;
                         captureStatus.fail = true;
                     }
                 }else{
-                    armEndPoseMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    armEndPoseMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 armEndPoseMsgLastCounts.at(i) = count;
                 allCount += count;
@@ -1532,15 +1523,15 @@ public:
                 double frequency = ((double)count / (lastTime - startTime));
                 std::cout<<localizationPoseTopics.at(i)<<": "<<countInSecond<<" / "<<count<<"("<<frequency<<"hz)"<<std::endl;
                 if(localizationPoseMsgLastUpHzTimes.at(i) == 0){
-                    localizationPoseMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    localizationPoseMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 if(this->hz != -1 && countInSecond <= this->hz){
-                    if(ros::Time::now().toSec() - localizationPoseMsgLastUpHzTimes.at(i) > this->timeout){
+                    if(rclcpp::Clock().now().seconds() - localizationPoseMsgLastUpHzTimes.at(i) > this->timeout){
                         std::cout<<"Check the frequency of "<<localizationPoseTopics.at(i)<<std::endl;
                         captureStatus.fail = true;
                     }
                 }else{
-                    localizationPoseMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    localizationPoseMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 localizationPoseMsgLastCounts.at(i) = count;
                 allCount += count;
@@ -1559,15 +1550,15 @@ public:
                 double frequency = ((double)count / (lastTime - startTime));
                 std::cout<<gripperEncoderTopics.at(i)<<": "<<countInSecond<<" / "<<count<<"("<<frequency<<"hz)"<<std::endl;
                 if(gripperEncoderMsgLastUpHzTimes.at(i) == 0){
-                    gripperEncoderMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    gripperEncoderMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 if(this->hz != -1 && countInSecond <= this->hz){
-                    if(ros::Time::now().toSec() - gripperEncoderMsgLastUpHzTimes.at(i) > this->timeout){
+                    if(rclcpp::Clock().now().seconds() - gripperEncoderMsgLastUpHzTimes.at(i) > this->timeout){
                         std::cout<<"Check the frequency of "<<gripperEncoderTopics.at(i)<<std::endl;
                         captureStatus.fail = true;
                     }
                 }else{
-                    gripperEncoderMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    gripperEncoderMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 gripperEncoderMsgLastCounts.at(i) = count;
                 allCount += count;
@@ -1584,17 +1575,17 @@ public:
                 imu9AxisMsgCountMtxs.at(i).unlock();
                 int countInSecond = count - imu9AxisMsgLastCounts.at(i);
                 double frequency = ((double)count / (lastTime - startTime));
-                std::cout<<imu9AxisTopics.at(i)<<": "<<countInSecond<<" / "<<count<<"("<<frequency<<"hz)"<<std::endl;
+                std::cout<<imu9AxisTopics.at(i)<<": "<<countInSecond<<" / "<<count<<"("<<frequency<<"hz)"<<std::endl;                
                 if(imu9AxisMsgLastUpHzTimes.at(i) == 0){
-                    imu9AxisMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    imu9AxisMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 if(this->hz != -1 && countInSecond <= this->hz){
-                    if(ros::Time::now().toSec() - imu9AxisMsgLastUpHzTimes.at(i) > this->timeout){
+                    if(rclcpp::Clock().now().seconds() - imu9AxisMsgLastUpHzTimes.at(i) > this->timeout){
                         std::cout<<"Check the frequency of "<<imu9AxisTopics.at(i)<<std::endl;
                         captureStatus.fail = true;
                     }
                 }else{
-                    imu9AxisMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    imu9AxisMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 imu9AxisMsgLastCounts.at(i) = count;
                 allCount += count;
@@ -1613,15 +1604,15 @@ public:
                 double frequency = ((double)count / (lastTime - startTime));
                 std::cout<<lidarPointCloudTopics.at(i)<<": "<<countInSecond<<" / "<<count<<"("<<frequency<<"hz)"<<std::endl;
                 if(lidarPointCloudMsgLastUpHzTimes.at(i) == 0){
-                    lidarPointCloudMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    lidarPointCloudMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 if(this->hz != -1 && countInSecond <= this->hz){
-                    if(ros::Time::now().toSec() - lidarPointCloudMsgLastUpHzTimes.at(i) > this->timeout){
+                    if(rclcpp::Clock().now().seconds() - lidarPointCloudMsgLastUpHzTimes.at(i) > this->timeout){
                         std::cout<<"Check the frequency of "<<lidarPointCloudTopics.at(i)<<std::endl;
                         captureStatus.fail = true;
                     }
                 }else{
-                    lidarPointCloudMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    lidarPointCloudMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 lidarPointCloudMsgLastCounts.at(i) = count;
                 allCount += count;
@@ -1640,15 +1631,15 @@ public:
                 double frequency = ((double)count / (lastTime - startTime));
                 std::cout<<robotBaseVelTopics.at(i)<<": "<<countInSecond<<" / "<<count<<"("<<frequency<<"hz)"<<std::endl;
                 if(robotBaseVelMsgLastUpHzTimes.at(i) == 0){
-                    robotBaseVelMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    robotBaseVelMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 if(this->hz != -1 && countInSecond <= this->hz){
-                    if(ros::Time::now().toSec() - robotBaseVelMsgLastUpHzTimes.at(i) > this->timeout){
+                    if(rclcpp::Clock().now().seconds() - robotBaseVelMsgLastUpHzTimes.at(i) > this->timeout){
                         std::cout<<"Check the frequency of "<<robotBaseVelTopics.at(i)<<std::endl;
                         captureStatus.fail = true;
                     }
                 }else{
-                    robotBaseVelMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    robotBaseVelMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 robotBaseVelMsgLastCounts.at(i) = count;
                 allCount += count;
@@ -1667,15 +1658,15 @@ public:
                 double frequency = ((double)count / (lastTime - startTime));
                 std::cout<<liftMotorTopics.at(i)<<": "<<countInSecond<<" / "<<count<<"("<<frequency<<"hz)"<<std::endl;
                 if(liftMotorMsgLastUpHzTimes.at(i) == 0){
-                    liftMotorMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    liftMotorMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 if(this->hz != -1 && countInSecond <= this->hz){
-                    if(ros::Time::now().toSec() - liftMotorMsgLastUpHzTimes.at(i) > this->timeout){
+                    if(rclcpp::Clock().now().seconds() - liftMotorMsgLastUpHzTimes.at(i) > this->timeout){
                         std::cout<<"Check the frequency of "<<liftMotorTopics.at(i)<<std::endl;
                         captureStatus.fail = true;
                     }
                 }else{
-                    liftMotorMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                    liftMotorMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
                 }
                 liftMotorMsgLastCounts.at(i) = count;
                 allCount += count;
@@ -1685,7 +1676,7 @@ public:
                 captureStatus.frequencies.push_back(frequency);
             }
             captureStatus.quit = false;
-            pubCaptureStatus.publish(captureStatus);
+            pubCaptureStatus->publish(captureStatus);
             std::cout<<"sum total frame: "<<allCount<<std::endl;
             std::cout<<std::endl;
 
@@ -1733,7 +1724,7 @@ public:
                 captureStopMtx.unlock();
                 if(stop){
                     captureStatus.quit = true;
-                    pubCaptureStatus.publish(captureStatus);
+                    pubCaptureStatus->publish(captureStatus);
                     break;
                 }
             }
@@ -1752,133 +1743,161 @@ public:
 };
 
 
-class DataCaptureService{
+class DataCaptureService: public rclcpp::Node{
     public:
-    ros::NodeHandle nh;
-    ros::ServiceServer srvDataCapture;
-    DataCapture *dataCapture;
+    rclcpp::Service<data_msgs::srv::CaptureService>::SharedPtr srvDataCapture;
+    rclcpp::executors::MultiThreadedExecutor *exec;
+    std::shared_ptr<DataCapture> dataCapture;
+    bool useService;
     std::string datasetDir;
     int episodeIndex;
+    std::string instructions;
+    rclcpp::NodeOptions options;
+    std::string name;
+
+    std::thread *spinThread;
+
     int hz;
     int timeout;
     double cropTime;
 
-    DataCaptureService(std::string datasetDir, int episodeIndex, int hz, int timeout, double cropTime) {
-        this->datasetDir = datasetDir;
-        this->episodeIndex = episodeIndex;
-        this->hz = hz;
-        this->timeout = timeout;
-        this->cropTime = cropTime;
-        dataCapture = nullptr;
-        srvDataCapture  = nh.advertiseService("/data_tools_dataCapture/capture_service", &DataCaptureService::captureService, this);
+    void spining(){
+        exec->spin();
     }
 
-    bool captureService(data_msgs::CaptureServiceRequest& req, data_msgs::CaptureServiceResponse& res)
-    {
-        if(req.start && req.end){
-            if(dataCapture != nullptr){
-                // res.success = false;
-                dataCapture->shutdown();
-                dataCapture->join();
-                delete dataCapture;
-                dataCapture = nullptr;
-                res.success = true;
-            }else{
-                std::string datasetDir = this->datasetDir;
-                int episodeIndex = this->episodeIndex;
-                if(req.dataset_dir != ""){
-                    datasetDir = req.dataset_dir;
-                }
-                if(req.episode_index != -1){
-                    episodeIndex = req.episode_index;
-                }
-                dataCapture = new DataCapture(datasetDir, episodeIndex, hz, timeout, cropTime, true);
-                if(req.episode_index == -1){
-                    this->episodeIndex++;
-                }
-                ros::Duration(this->cropTime).sleep();
-                dataCapture->instructionSaving(req.instructions);
-                dataCapture->run();
-                res.success = true;
-            }
-        }else{
-            if(req.start){
-                if(dataCapture != nullptr){
-                    // res.success = false;
-                    dataCapture->shutdown();
-                    dataCapture->join();
-                    delete dataCapture;
-                    dataCapture = nullptr;
-                }
-                // else{
-                    std::string datasetDir = this->datasetDir;
-                    int episodeIndex = this->episodeIndex;
-                    if(req.dataset_dir != ""){
-                        datasetDir = req.dataset_dir;
+    DataCaptureService(std::string name, const rclcpp::NodeOptions & options): rclcpp::Node(name, options) {
+        this->datasetDir = datasetDir;
+        this->episodeIndex = episodeIndex;
+        exec = nullptr;
+        this->options = options;
+        this->name = name;
+        declare_parameter("useService", true);get_parameter("useService", useService);
+        declare_parameter("datasetDir", "/home/agilex/data");get_parameter("datasetDir", datasetDir);
+        declare_parameter("episodeIndex", 0);get_parameter("episodeIndex", episodeIndex);
+        declare_parameter("instructions", "[null]");get_parameter("instructions", instructions);
+        declare_parameter("hz", -1);get_parameter("hz", hz);
+        declare_parameter("timeout", 2);get_parameter("timeout", timeout);
+        declare_parameter("cropTime", -1.0);get_parameter("cropTime", cropTime);
+        if(useService){
+            auto captureService = [this, name, options](const std::shared_ptr<rmw_request_id_t> request_header, const std::shared_ptr<data_msgs::srv::CaptureService::Request> req, std::shared_ptr<data_msgs::srv::CaptureService::Response> res) -> void 
+            {
+                (void)request_header;
+                if(req->start && req->end){
+                    if(exec != nullptr){
+                        // res->success = false;
+                        ((DataCapture *)dataCapture.get())->shutdown();
+                        ((DataCapture *)dataCapture.get())->join();
+                        exec->remove_node(dataCapture);
+                        exec->cancel();
+                        spinThread->join();
+                        delete spinThread;
+                        delete exec;
+                        spinThread = nullptr;
+                        exec = nullptr;
+                    }else{
+                        std::string datasetDir = this->datasetDir;
+                        int episodeIndex = this->episodeIndex;
+                        if(req->dataset_dir != ""){
+                            datasetDir = req->dataset_dir;
+                        }
+                        if(req->episode_index != -1){
+                            episodeIndex = req->episode_index;
+                        }
+                        rclcpp::sleep_for(std::chrono::seconds(1));
+                        exec = new rclcpp::executors::MultiThreadedExecutor;
+                        dataCapture = std::make_shared<DataCapture>(name, options, datasetDir, episodeIndex, hz, timeout, cropTime, true);
+                        if(req->episode_index == -1){
+                            this->episodeIndex++;
+                        }
+                        exec->add_node(dataCapture);
+                        ((DataCapture *)dataCapture.get())->instructionSaving(instructions);
+                        ((DataCapture *)dataCapture.get())->run();
+                        spinThread = new std::thread(&DataCaptureService::spining, this);
+                        res->success = true;
                     }
-                    if(req.episode_index != -1){
-                        episodeIndex = req.episode_index;
-                    }
-                    dataCapture = new DataCapture(datasetDir, episodeIndex, hz, timeout, cropTime, true);
-                    if(req.episode_index == -1){
-                        this->episodeIndex++;
-                    }
-                    ros::Duration(this->cropTime).sleep();
-                    dataCapture->instructionSaving(req.instructions);
-                    dataCapture->run();
-                    res.success = true;
-                // }
-            }else if(req.end){
-                if(dataCapture != nullptr){
-                    dataCapture->shutdown();
-                    dataCapture->join();
-                    delete dataCapture;
-                    dataCapture = nullptr;
-                    res.success = true;
-                    std::cout<<"wait for start signal"<<std::endl;
                 }else{
-                    res.success = false;
+                    if(req->start){
+                        if(exec != nullptr){
+                            // res->success = false;
+                            ((DataCapture *)dataCapture.get())->shutdown();
+                            ((DataCapture *)dataCapture.get())->join();
+                            exec->remove_node(dataCapture);
+                            exec->cancel();
+                            spinThread->join();
+                            delete spinThread;
+                            delete exec;
+                            spinThread = nullptr;
+                            exec = nullptr;
+                        }
+                        // else{
+                            std::string datasetDir = this->datasetDir;
+                            int episodeIndex = this->episodeIndex;
+                            if(req->dataset_dir != ""){
+                                datasetDir = req->dataset_dir;
+                            }
+                            if(req->episode_index != -1){
+                                episodeIndex = req->episode_index;
+                            }
+                            rclcpp::sleep_for(std::chrono::seconds(1));
+                            exec = new rclcpp::executors::MultiThreadedExecutor;
+                            dataCapture = std::make_shared<DataCapture>(name, options, datasetDir, episodeIndex, hz, timeout, cropTime, true);
+                            if(req->episode_index == -1){
+                                this->episodeIndex++;
+                            }
+                            exec->add_node(dataCapture);
+                            ((DataCapture *)dataCapture.get())->instructionSaving(instructions);
+                            ((DataCapture *)dataCapture.get())->run();
+                            spinThread = new std::thread(&DataCaptureService::spining, this);
+                            res->success = true;
+                        // }
+                    }else if(req->end){
+                        if(dataCapture != nullptr){
+                            ((DataCapture *)dataCapture.get())->shutdown();
+                            ((DataCapture *)dataCapture.get())->join();
+                            exec->remove_node(dataCapture);
+                            exec->cancel();
+                            spinThread->join();
+                            delete spinThread;
+                            delete exec;
+                            spinThread = nullptr;
+                            exec = nullptr;
+                            res->success = true;
+                            std::cout<<"wait for start signal"<<std::endl;
+                        }else{
+                            res->success = false;
+                        }
+                    }
                 }
-            }
+            };
+            srvDataCapture = create_service<data_msgs::srv::CaptureService>("/data_tools_dataCapture/capture_service", captureService);
         }
-        return true;
+        else{
+            exec = new rclcpp::executors::MultiThreadedExecutor;
+            dataCapture = std::make_shared<DataCapture>(name, options, datasetDir, episodeIndex, hz, timeout);
+            exec->add_node(dataCapture);
+            ((DataCapture *)dataCapture.get())->instructionSaving(instructions);
+            ((DataCapture *)dataCapture.get())->run();
+            exec->spin();
+            ((DataCapture *)dataCapture.get())->join();
+            rclcpp::shutdown();
+            std::cout<<"Done"<<std::endl;
+        }
     }
 };
 
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "data_capture");
-    ros::NodeHandle nh;
-    bool useService;
-    std::string datasetDir;
-    int episodeIndex;
-    std::string instructions;
-    int hz;
-    int timeout;
-    double cropTime;
-    nh.param<bool>("useService", useService, false);
-    nh.param<std::string>("datasetDir", datasetDir, "/home/agilex/data");
-    nh.param<int>("episodeIndex", episodeIndex, 0);
-    nh.param<std::string>("instructions", instructions, "");
-    nh.param<int>("hz", hz, -1);
-    nh.param<int>("timeout", timeout, 2);
-    nh.param<double>("cropTime", cropTime, -1);
-    ROS_INFO("\033[1;32m----> data capture Started.\033[0m");
-    if(useService){
-        DataCaptureService dataCaptureService(datasetDir, episodeIndex, hz, timeout, cropTime);
-        ros::MultiThreadedSpinner spinner(16);
-        spinner.spin();
-        std::cout<<"Done"<<std::endl;
-        return 0;
-    }else{
-        DataCapture dataCapture(datasetDir, episodeIndex, hz, timeout);
-        dataCapture.instructionSaving(instructions);
-        dataCapture.run();
-        ros::MultiThreadedSpinner spinner(16);
-        spinner.spin();
-        dataCapture.join();
-        std::cout<<"Done"<<std::endl;
-        return 0;
-    }
+    rclcpp::init(argc, argv);
+    rclcpp::NodeOptions options;
+    options.use_intra_process_comms(true);
+    // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "\033[1;32m----> data capture Started.\033[0m");
+    // rclcpp::executors::SingleThreadedExecutor exec;
+    rclcpp::executors::MultiThreadedExecutor exec;
+    auto dataCaptureService = std::make_shared<DataCaptureService>("data_capture", options);
+    exec.add_node(dataCaptureService);
+    exec.spin();
+    rclcpp::shutdown();
+    std::cout<<"Done"<<std::endl;
+    return 0;
 }

@@ -397,7 +397,7 @@ def get_arguments():
 
     with open(f'../config/{args.type}_data_params.yaml', 'r') as file:
         yaml_data = yaml.safe_load(file)
-        args.cameraNames = yaml_data['dataInfo']['camera']['depth']['names']
+        args.cameraNames = yaml_data['/**']['ros__parameters']['dataInfo']['camera']['depth']['names']
 
     return args
 

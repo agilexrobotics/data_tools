@@ -391,17 +391,17 @@ def get_arguments():
 
     with open(f'../config/{args.type}_data_params.yaml', 'r') as file:
         yaml_data = yaml.safe_load(file)
-        args.cameraColorNames = yaml_data['dataInfo']['camera']['color']['names']
-        args.cameraDepthNames = yaml_data['dataInfo']['camera']['depth']['names']
-        args.cameraPointCloudNames = yaml_data['dataInfo']['camera']['pointCloud']['names']
-        args.armJointStateNames = yaml_data['dataInfo']['arm']['jointState']['names']
-        args.armEndPoseNames = yaml_data['dataInfo']['arm']['endPose']['names']
-        args.localizationPoseNames = yaml_data['dataInfo']['localization']['pose']['names']
-        args.gripperEncoderNames = yaml_data['dataInfo']['gripper']['encoder']['names']
-        args.imu9AxisNames = yaml_data['dataInfo']['imu']['9axis']['names']
-        args.lidarPointCloudNames = yaml_data['dataInfo']['lidar']['pointCloud']['names']
-        args.robotBaseVelNames = yaml_data['dataInfo']['robotBase']['vel']['names']
-        args.liftMotorNames = yaml_data['dataInfo']['lift']['motor']['names']
+        args.cameraColorNames = yaml_data['/**']['ros__parameters']['dataInfo']['camera']['color']['names']
+        args.cameraDepthNames = yaml_data['/**']['ros__parameters']['dataInfo']['camera']['depth']['names']
+        args.cameraPointCloudNames = yaml_data['/**']['ros__parameters']['dataInfo']['camera']['pointCloud']['names']
+        args.armJointStateNames = yaml_data['/**']['ros__parameters']['dataInfo']['arm']['jointState']['names']
+        args.armEndPoseNames = yaml_data['/**']['ros__parameters']['dataInfo']['arm']['endPose']['names']
+        args.localizationPoseNames = yaml_data['/**']['ros__parameters']['dataInfo']['localization']['pose']['names']
+        args.gripperEncoderNames = yaml_data['/**']['ros__parameters']['dataInfo']['gripper']['encoder']['names']
+        args.imu9AxisNames = yaml_data['/**']['ros__parameters']['dataInfo']['imu']['9axis']['names']
+        args.lidarPointCloudNames = yaml_data['/**']['ros__parameters']['dataInfo']['lidar']['pointCloud']['names']
+        args.robotBaseVelNames = yaml_data['/**']['ros__parameters']['dataInfo']['robotBase']['vel']['names']
+        args.liftMotorNames = yaml_data['/**']['ros__parameters']['dataInfo']['lift']['motor']['names']
 
     return args
 
