@@ -451,6 +451,9 @@ public:
         monitoringThread->join();
         delete monitoringThread;
         monitoringThread = nullptr;
+        data_msgs::CaptureStatus captureStatus;
+        captureStatus.quit = true;
+        pubCaptureStatus.publish(captureStatus);
     }
 
     void cameraColorHandler(const sensor_msgs::Image::ConstPtr& msg, const int& index){
@@ -1739,8 +1742,10 @@ public:
             rate.sleep();
         }
         if(captureStatus.fail)
-            if(this->useService)
+            if(this->useService){
+                std::cout<<"The device frequency does not match, stop, waiting for the end signal."<<std::endl;
                 shutdown();
+            }
             else
                 exit(0);
     }
@@ -1770,15 +1775,15 @@ class DataCaptureService{
 
     bool captureService(data_msgs::CaptureServiceRequest& req, data_msgs::CaptureServiceResponse& res)
     {
-        if(req.start){
+        if(req.start && req.end){
             if(dataCapture != nullptr){
                 // res.success = false;
                 dataCapture->shutdown();
                 dataCapture->join();
                 delete dataCapture;
                 dataCapture = nullptr;
-            }
-            // else{
+                res.success = true;
+            }else{
                 std::string datasetDir = this->datasetDir;
                 int episodeIndex = this->episodeIndex;
                 if(req.dataset_dir != ""){
@@ -1795,17 +1800,45 @@ class DataCaptureService{
                 dataCapture->instructionSaving(req.instructions);
                 dataCapture->run();
                 res.success = true;
-            // }
-        }else if(req.end){
-            if(dataCapture != nullptr){
-                dataCapture->shutdown();
-                dataCapture->join();
-                delete dataCapture;
-                dataCapture = nullptr;
-                res.success = true;
-                std::cout<<"wait for start signal"<<std::endl;
-            }else{
-                res.success = false;
+            }
+        }else{
+            if(req.start){
+                if(dataCapture != nullptr){
+                    // res.success = false;
+                    dataCapture->shutdown();
+                    dataCapture->join();
+                    delete dataCapture;
+                    dataCapture = nullptr;
+                }
+                // else{
+                    std::string datasetDir = this->datasetDir;
+                    int episodeIndex = this->episodeIndex;
+                    if(req.dataset_dir != ""){
+                        datasetDir = req.dataset_dir;
+                    }
+                    if(req.episode_index != -1){
+                        episodeIndex = req.episode_index;
+                    }
+                    dataCapture = new DataCapture(datasetDir, episodeIndex, hz, timeout, cropTime, true);
+                    if(req.episode_index == -1){
+                        this->episodeIndex++;
+                    }
+                    ros::Duration(this->cropTime).sleep();
+                    dataCapture->instructionSaving(req.instructions);
+                    dataCapture->run();
+                    res.success = true;
+                // }
+            }else if(req.end){
+                if(dataCapture != nullptr){
+                    dataCapture->shutdown();
+                    dataCapture->join();
+                    delete dataCapture;
+                    dataCapture = nullptr;
+                    res.success = true;
+                    std::cout<<"wait for start signal"<<std::endl;
+                }else{
+                    res.success = false;
+                }
             }
         }
         return true;

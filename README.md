@@ -30,10 +30,13 @@ Download our source code, and place this package and libsurvive in the workspace
 ## Build
 
 ```shell
-cd {YOUR_WS}
+cd {YOUR_WS}/src
 git clone https://github.com/agilexrobotics/data_tools.git
 git clone https://github.com/agilexrobotics/data_msgs.git
-catkin_make
+cd {YOUR_WS}
+catkin_make -DCATKIN_WHITELIST_PACKAGES="data_msgs"
+source devel/setup.bash
+catkin_make -DCATKIN_WHITELIST_PACKAGES=""
 ```
 ## Run
 
@@ -256,9 +259,9 @@ python3 data_publish.py --type single_pika --datasetDir {data_path} --episodeInd
 # double pika
 python3 data_publish.py --type multi_pika --datasetDir {data_path} --episodeIndex 0
 # single pika teleop
-python3 data_publish.py --type single_pika --datasetDir {data_path} --episodeIndex 0
+python3 data_publish.py --type single_pika_teleop --datasetDir {data_path} --episodeIndex 0
 # double pika teleop
-python3 data_publish.py --type multi_pika --datasetDir {data_path} --episodeIndex 0
+python3 data_publish.py --type multi_pika_teleop --datasetDir {data_path} --episodeIndex 0
 ```
 ## How to load data from an HDF5 file for training
 
