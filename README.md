@@ -31,9 +31,9 @@ Download our source code, and place this package and libsurvive in the workspace
 
 ```shell
 cd {YOUR_WS}/src
-git clone https://gitee.com/LunKai/data_tools.git
+git clone https://github.com/agilexrobotics/data_tools.git
 cd data_tools && git checkout ros2
-git clone https://gitee.com/LunKai/data_msgs.git
+git clone https://github.com/agilexrobotics/data_msgs.git
 cd data_msgs && git checkout ros2
 cd {YOUR_WS}
 colcon build --packages-select data_msgs
