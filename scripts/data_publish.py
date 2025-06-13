@@ -451,30 +451,29 @@ def get_arguments():
 
     with open(f'../config/{args.type}_data_params.yaml', 'r') as file:
         yaml_data = yaml.safe_load(file)
-        args.camera_color_names = yaml_data['/**']['ros__parameters']['dataInfo']['camera']['color']['names']
-        args.camera_color_topics = yaml_data['/**']['ros__parameters']['dataInfo']['camera']['color']['topics']
-        args.camera_depth_names = yaml_data['/**']['ros__parameters']['dataInfo']['camera']['depth']['names']
-        args.camera_depth_topics = yaml_data['/**']['ros__parameters']['dataInfo']['camera']['depth']['topics']
-        args.camera_point_cloud_names = yaml_data['/**']['ros__parameters']['dataInfo']['camera']['pointCloud']['names']
-        args.camera_point_cloud_topics = yaml_data['/**']['ros__parameters']['dataInfo']['camera']['pointCloud']['topics']
-        args.arm_joint_state_names = yaml_data['/**']['ros__parameters']['dataInfo']['arm']['jointState']['names']
-        args.arm_joint_state_topics = yaml_data['/**']['ros__parameters']['dataInfo']['arm']['jointState']['topics']
-        args.arm_end_pose_names = yaml_data['/**']['ros__parameters']['dataInfo']['arm']['endPose']['names']
-        args.arm_end_pose_topics = yaml_data['/**']['ros__parameters']['dataInfo']['arm']['endPose']['topics']
-        args.arm_end_pose_orients = yaml_data['/**']['ros__parameters']['dataInfo']['arm']['endPose']['orients']
-        args.localization_pose_names = yaml_data['/**']['ros__parameters']['dataInfo']['localization']['pose']['names']
-        args.localization_pose_topics = yaml_data['/**']['ros__parameters']['dataInfo']['localization']['pose']['topics']
-        args.gripper_encoder_names = yaml_data['/**']['ros__parameters']['dataInfo']['gripper']['encoder']['names']
-        args.gripper_encoder_topics = yaml_data['/**']['ros__parameters']['dataInfo']['gripper']['encoder']['topics']
-        args.imu_9axis_names = yaml_data['/**']['ros__parameters']['dataInfo']['imu']['9axis']['names']
-        args.imu_9axis_topics = yaml_data['/**']['ros__parameters']['dataInfo']['imu']['9axis']['topics']
-        args.lidar_point_cloud_names = yaml_data['/**']['ros__parameters']['dataInfo']['lidar']['pointCloud']['names']
-        args.lidar_point_cloud_topics = yaml_data['/**']['ros__parameters']['dataInfo']['lidar']['pointCloud']['topics']
-        args.robot_base_vel_names = yaml_data['/**']['ros__parameters']['dataInfo']['robotBase']['vel']['names']
-        args.robot_base_vel_topics = yaml_data['/**']['ros__parameters']['dataInfo']['robotBase']['vel']['topics']
-        args.lift_motor_names = yaml_data['/**']['ros__parameters']['dataInfo']['lift']['motor']['names']
-        args.lift_motor_topics = yaml_data['/**']['ros__parameters']['dataInfo']['lift']['motor']['topics']
-
+        args.camera_color_names = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('camera', {}).get('color', {}).get('names', [])
+        args.camera_color_topics = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('camera', {}).get('color', {}).get('topics', [])
+        args.camera_depth_names = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('camera', {}).get('depth', {}).get('names', [])
+        args.camera_depth_topics = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('camera', {}).get('depth', {}).get('topics', [])
+        args.camera_point_cloud_names = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('camera', {}).get('pointCloud', {}).get('names', [])
+        args.camera_point_cloud_topics = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('camera', {}).get('pointCloud', {}).get('topics', [])
+        args.arm_joint_state_names = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('arm', {}).get('jointState', {}).get('names', [])
+        args.arm_joint_state_topics = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('arm', {}).get('jointState', {}).get('topics', [])
+        args.arm_end_pose_names = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('arm', {}).get('endPose', {}).get('names', [])
+        args.arm_end_pose_topics = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('arm', {}).get('endPose', {}).get('topics', [])
+        args.arm_end_pose_orients = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('arm', {}).get('endPose', {}).get('orients', [])
+        args.localization_pose_names = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('localization', {}).get('pose', {}).get('names', [])
+        args.localization_pose_topics = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('localization', {}).get('pose', {}).get('topics', [])
+        args.gripper_encoder_names = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('gripper', {}).get('encoder', {}).get('names', [])
+        args.gripper_encoder_topics = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('gripper', {}).get('encoder', {}).get('topics', [])
+        args.imu_9axis_names = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('imu', {}).get('9axis', {}).get('names', [])
+        args.imu_9axis_topics = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('imu', {}).get('9axis', {}).get('topics', [])
+        args.lidar_point_cloud_names = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('lidar', {}).get('pointCloud', {}).get('names', [])
+        args.lidar_point_cloud_topics = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('lidar', {}).get('pointCloud', {}).get('topics', [])
+        args.robot_base_vel_names = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('robotBase', {}).get('vel', {}).get('names', [])
+        args.robot_base_vel_topics = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('robotBase', {}).get('vel', {}).get('topics', [])
+        args.lift_motor_names = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('lift', {}).get('motor', {}).get('names', [])
+        args.lift_motor_topics = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('lift', {}).get('motor', {}).get('topics', [])
     return args
 
 

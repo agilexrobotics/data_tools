@@ -391,18 +391,17 @@ def get_arguments():
 
     with open(f'../config/{args.type}_data_params.yaml', 'r') as file:
         yaml_data = yaml.safe_load(file)
-        args.cameraColorNames = yaml_data['/**']['ros__parameters']['dataInfo']['camera']['color']['names']
-        args.cameraDepthNames = yaml_data['/**']['ros__parameters']['dataInfo']['camera']['depth']['names']
-        args.cameraPointCloudNames = yaml_data['/**']['ros__parameters']['dataInfo']['camera']['pointCloud']['names']
-        args.armJointStateNames = yaml_data['/**']['ros__parameters']['dataInfo']['arm']['jointState']['names']
-        args.armEndPoseNames = yaml_data['/**']['ros__parameters']['dataInfo']['arm']['endPose']['names']
-        args.localizationPoseNames = yaml_data['/**']['ros__parameters']['dataInfo']['localization']['pose']['names']
-        args.gripperEncoderNames = yaml_data['/**']['ros__parameters']['dataInfo']['gripper']['encoder']['names']
-        args.imu9AxisNames = yaml_data['/**']['ros__parameters']['dataInfo']['imu']['9axis']['names']
-        args.lidarPointCloudNames = yaml_data['/**']['ros__parameters']['dataInfo']['lidar']['pointCloud']['names']
-        args.robotBaseVelNames = yaml_data['/**']['ros__parameters']['dataInfo']['robotBase']['vel']['names']
-        args.liftMotorNames = yaml_data['/**']['ros__parameters']['dataInfo']['lift']['motor']['names']
-
+        args.cameraColorNames = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('camera', {}).get('color', {}).get('names', [])
+        args.cameraDepthNames = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('camera', {}).get('depth', {}).get('names', [])
+        args.cameraPointCloudNames = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('camera', {}).get('pointCloud', {}).get('names', [])
+        args.armJointStateNames = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('arm', {}).get('jointState', {}).get('names', [])
+        args.armEndPoseNames = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('arm', {}).get('endPose', {}).get('names', [])
+        args.localizationPoseNames = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('localization', {}).get('pose', {}).get('names', [])
+        args.gripperEncoderNames = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('gripper', {}).get('encoder', {}).get('names', [])
+        args.imu9AxisNames = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('imu', {}).get('9axis', {}).get('names', [])
+        args.lidarPointCloudNames = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('lidar', {}).get('pointCloud', {}).get('names', [])
+        args.robotBaseVelNames = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('robotBase', {}).get('vel', {}).get('names', [])
+        args.liftMotorNames = yaml_data.get('/**', {}).get('ros__parameters', {}).get('dataInfo', {}).get('lift', {}).get('motor', {}).get('names', [])
     return args
 
 
