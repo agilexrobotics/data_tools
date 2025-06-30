@@ -2,6 +2,7 @@
 VERSION = "0.0.1"
 
 import argparse
+from logging import shutdown
 import os
 import yaml
 import json
@@ -174,11 +175,40 @@ class AlohaDataToMcapNode(Node):
 
     def add_gripper_data(self, topic, file_path):
         frame_time = self.get_timestamp_from_file(file_path)
-        pass
+        with open(file_path, 'r') as json_file:
+            data = json.load(json_file)
+            msg = Gripper()
+            msg.header.stamp = frame_time.to_msg()
+            msg.angle = float(data["angle"])
+            msg.distance = float(data["distance"])
+            self.push_data_to_mcap(msg, topic, frame_time.nanoseconds)
 
     def add_imu_data(self, topic, file_path):
         frame_time = self.get_timestamp_from_file(file_path)
-        pass
+        with open(file_path, 'r') as json_file:
+            data = json.load(json_file)
+            msg = Imu()
+            msg.header.stamp = frame_time.to_msg()
+            # print(type(data["angular_velocity"]))
+            # print(type(msg.angular_velocity))
+            # rclpy.shutdown()
+            angular_velocity_dict = data["angular_velocity"]
+            linear_acceleration_dict = data["linear_acceleration"]
+            orientation_dict = data["orientation"]
+            msg.angular_velocity.x = float(angular_velocity_dict["x"])
+            msg.angular_velocity.y = float(angular_velocity_dict["y"])
+            msg.angular_velocity.z = float(angular_velocity_dict["z"])
+            msg.linear_acceleration.x = float(linear_acceleration_dict["x"])
+            msg.linear_acceleration.y = float(linear_acceleration_dict["y"])
+            msg.linear_acceleration.z = float(linear_acceleration_dict["z"])
+            msg.orientation.x = float(orientation_dict["x"])
+            msg.orientation.y = float(orientation_dict["y"])
+            msg.orientation.z = float(orientation_dict["z"])
+            msg.orientation.w = float(orientation_dict["w"])
+            # msg.angular_velocity = array.array("d", data["angular_velocity"])
+            # msg.linear_acceleration = array.array("d", data["linear_acceleration"])
+            # msg.orientation = array.array("d", data["orientation"])
+            self.push_data_to_mcap(msg, topic, frame_time.nanoseconds)
 
     def add_robot_base_data(self, topic, file_path):
         frame_time = self.get_timestamp_from_file(file_path)
@@ -255,8 +285,8 @@ class AlohaDataToMcapNode(Node):
         with open(info_path, 'r') as info_file:
             data = json.load(info_file)
             info_msg.d = array.array('d', data["D"])
-            info_msg.k = np.array(data["K"])
-            info_msg.p = np.array(data["P"])
+            info_msg.k = np.array(data["K"], dtype=np.float64)
+            info_msg.p = np.array(data["P"], dtype=np.float64)
             info_msg.r = np.array(data["R"], dtype=np.float64)
             info_msg.binning_x = data["binning_x"]
             info_msg.binning_y = data["binning_y"]

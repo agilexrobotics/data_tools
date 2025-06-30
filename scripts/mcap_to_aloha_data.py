@@ -14,7 +14,8 @@ import sys
 import tf_transformations
 
 def ros_time_to_sec_str(timestamp) -> str:
-    return f"{timestamp.sec}.{int(round(timestamp.nanosec/1000))}"
+    return f"{timestamp.sec+timestamp.nanosec/1e9:.6f}"
+    # return f"{timestamp.sec}.{int(round(timestamp.nanosec/1000))}"
 
 def run_shell_command(cmd="", enable_error_output=True):
     if not enable_error_output:
@@ -178,7 +179,45 @@ def process_file(input_mcap_file, data_dir, yaml_path):
             }
             with open(f"{output_dir_head}{save_topic_dirs[topic]}/{filename}.json", 'w+') as json_file:
                 json.dump(pose_dict, json_file, indent="\t")
-        # TODO gripper/imu/robotBase/transform
+        # gripper
+        elif "gripper" in sensor_topic_dict and topic in sensor_topic_dict["gripper"]:
+            msg = deserialize_message(data, get_message(topic_types_dict[topic]))
+            filename = ros_time_to_sec_str(msg.header.stamp)
+            angle = msg.angle
+            distance = msg.distance
+            gripper_dict = {
+                "angle": angle,
+                "distance": distance,
+            }
+            with open(f"{output_dir_head}{save_topic_dirs[topic]}/{filename}.json", 'w+') as json_file:
+                json.dump(gripper_dict, json_file, indent="\t")
+
+        # imu
+        elif "imu" in sensor_topic_dict and topic in sensor_topic_dict["imu"]:
+            msg = deserialize_message(data, get_message(topic_types_dict[topic]))
+            filename = ros_time_to_sec_str(msg.header.stamp)
+            imu_dict = {
+                "angular_velocity" : {
+                    "x" : msg.angular_velocity.x,
+                    "y" : msg.angular_velocity.y,
+                    "z" : msg.angular_velocity.z,
+                },
+                "linear_acceleration" : {
+                    "x" : msg.linear_acceleration.x,
+                    "y" : msg.linear_acceleration.y,
+                    "z" : msg.linear_acceleration.z,
+                },
+                "orientation" : {
+                    "x" : msg.orientation.x,
+                    "y" : msg.orientation.y,
+                    "z" : msg.orientation.z,
+                    "w" : msg.orientation.w,
+                },
+            }
+            with open(f"{output_dir_head}{save_topic_dirs[topic]}/{filename}.json", 'w+') as json_file:
+                json.dump(imu_dict, json_file, indent="\t")
+
+        # TODO /robotBase/transform
         # can't process
         elif topic not in fail_topics:
             fail_topics.append(topic)
@@ -210,7 +249,7 @@ def main():
     data_dir = mcap_dir
     parser = argparse.ArgumentParser()
     parser.add_argument('--datasetDir', action='store', type=str, help='datasetDir.',
-                        default="", required=False)
+                        default=os.getcwd(), required=False)
     parser.add_argument('--episodeIndex', action='store', type=int, help='Episode index.',
                         default=-1, required=False)
     parser.add_argument('--alohaYaml', action='store', type=str, help='alohaYaml.',

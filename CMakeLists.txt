@@ -10,6 +10,7 @@ if(USE_LIFT)
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(CURL REQUIRED)
 # find_package(rosidl_default_generators REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
@@ -57,15 +58,15 @@ include_directories(
 
 add_executable(${PROJECT_NAME}_dataCapture src/dataCapture.cpp)
 ament_target_dependencies(${PROJECT_NAME}_dataCapture rclpy std_msgs sensor_msgs geometry_msgs nav_msgs pcl_conversions pcl_msgs visualization_msgs tf2 tf2_ros tf2_eigen tf2_sensor_msgs tf2_geometry_msgs OpenCV PCL data_msgs cv_bridge)
-target_link_libraries(${PROJECT_NAME}_dataCapture "${cpp_typesupport_target}" ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES}  libjsoncpp.so)
+target_link_libraries(${PROJECT_NAME}_dataCapture "${cpp_typesupport_target}" ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${CURL_LIBRARIES} libjsoncpp.so)
 
 add_executable(${PROJECT_NAME}_dataSync src/dataSync.cpp)
 ament_target_dependencies(${PROJECT_NAME}_dataSync rclpy std_msgs sensor_msgs geometry_msgs nav_msgs pcl_conversions pcl_msgs visualization_msgs tf2 tf2_ros tf2_eigen tf2_sensor_msgs tf2_geometry_msgs OpenCV PCL data_msgs cv_bridge)
-target_link_libraries(${PROJECT_NAME}_dataSync ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} libjsoncpp.so)
+target_link_libraries(${PROJECT_NAME}_dataSync ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${CURL_LIBRARIES} libjsoncpp.so)
 
 add_executable(${PROJECT_NAME}_dataPublish src/dataPublish.cpp)
 ament_target_dependencies(${PROJECT_NAME}_dataPublish rclpy std_msgs sensor_msgs geometry_msgs nav_msgs pcl_conversions pcl_msgs visualization_msgs tf2 tf2_ros tf2_eigen tf2_sensor_msgs tf2_geometry_msgs OpenCV PCL data_msgs cv_bridge)
-target_link_libraries(${PROJECT_NAME}_dataPublish ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} libjsoncpp.so)
+target_link_libraries(${PROJECT_NAME}_dataPublish ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${CURL_LIBRARIES} libjsoncpp.so)
 
 #add_executable(${PROJECT_NAME}_readMcap src/readMcap.cpp)
 #ament_target_dependencies(${PROJECT_NAME}_readMcap rclpy std_msgs sensor_msgs geometry_msgs nav_msgs pcl_conversions pcl_msgs visualization_msgs tf2 #tf2_ros tf2_eigen tf2_sensor_msgs tf2_geometry_msgs OpenCV PCL cv_bridge)
