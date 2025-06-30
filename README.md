@@ -5,8 +5,8 @@
 <div align="center">
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/ario-dataset/ARIO-dataset-agilex/blob/master/LICENSE)
-![ubuntu](https://img.shields.io/badge/Ubuntu-20.04-orange.svg)
-![ROS1](https://img.shields.io/badge/ROS-noetic-blue.svg)
+![ubuntu](https://img.shields.io/badge/Ubuntu-22.04-orange.svg)
+![ROS2](https://img.shields.io/badge/ROS-humble-blue.svg)
 
 </div>
 
