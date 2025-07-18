@@ -86,7 +86,7 @@ class Operator:
         self.cameraDepthConfigDirs = [os.path.join(self.cameraDepthDirs[i], "config.json") for i in range(len(self.args.cameraDepthNames))]
         self.cameraPointCloudConfigDirs = [os.path.join(self.cameraPointCloudDirs[i], "config.json") for i in range(len(self.args.cameraPointCloudNames))]
 
-        self.instructionsDir = os.path.join(self.episodeDir, "instructions.npy")
+        self.instructionsDir = "instructions.npy"
         if self.args.useIndex:
             self.dataFile = os.path.join(self.episodeDir, "data.hdf5")
         else:
