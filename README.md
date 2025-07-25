@@ -25,7 +25,7 @@ These are ARIO dataset tools. Data collection, data saving, and data publishing 
 
 ## Installation
 
-Download our source code, and place this package and libsurvive in the workspace {YOUR_WS}/src.
+Download our source code, and place this package in the workspace {YOUR_WS}/src.
 
 ## Build
 
