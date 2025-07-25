@@ -42,6 +42,14 @@ colcon build
 ```
 ## Run
 
+Run mcap to ario(if your data is mcap).
+
+```bash
+source ~/{YOUR_WS}/install/setup.sh
+cd ~/{YOUR_WS}/src/data_tools/scripts/
+python3 mcap_to_aloha_data.py --datasetDir {your_dataset_dir} --alohaYaml {your_ws_dir}/src/data_tools/config/aloha_data_params.yaml
+```
+
 Run the data collection code.
 
 ```bash
