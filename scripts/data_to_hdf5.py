@@ -57,7 +57,7 @@ def create_transformation_matrix(x, y, z, roll, pitch, yaw):
 class Operator:
     def __init__(self, args):
         self.args = args
-        self.episodeDir = os.path.join(self.args.datasetDir, "episode" + str(self.args.episodeIndex))
+        self.episodeDir = os.path.join(self.args.datasetDir, self.args.episodeName)
         self.cameraColorDirs = [os.path.join(self.episodeDir, "camera/color/" + self.args.cameraColorNames[i]) for i in range(len(self.args.cameraColorNames))]
         self.cameraDepthDirs = [os.path.join(self.episodeDir, "camera/depth/" + self.args.cameraDepthNames[i]) for i in range(len(self.args.cameraDepthNames))]
         self.cameraPointCloudDirs = [os.path.join(self.episodeDir, "camera/pointCloud/" + self.args.cameraPointCloudNames[i] + ("-normalization" if self.args.useCameraPointCloudNormalization else "")) for i in range(len(self.args.cameraPointCloudNames))]
@@ -90,7 +90,7 @@ class Operator:
         if self.args.useIndex:
             self.dataFile = os.path.join(self.episodeDir, "data.hdf5")
         else:
-            self.dataFile = os.path.join(self.args.datasetTargetDir, f"episode{self.args.episodeIndex}.hdf5")
+            self.dataFile = os.path.join(self.args.datasetTargetDir, self.args.episodeName + ".hdf5")
 
     def process(self):
         data_dict = {}
@@ -353,8 +353,8 @@ def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--datasetDir', action='store', type=str, help='datasetDir',
                         default="/home/agilex/data", required=False)
-    parser.add_argument('--episodeIndex', action='store', type=int, help='episodeIndex',
-                        default=-1, required=False)
+    parser.add_argument('--episodeName', action='store', type=str, help='episodeName',
+                        default="", required=False)
     parser.add_argument('--datasetTargetDir', action='store', type=str, help='datasetTargetDir',
                         default="/home/agilex/data", required=False)
     parser.add_argument('--useIndex', action='store', type=bool, help='useIndex',
@@ -409,14 +409,14 @@ def main():
     args = get_arguments()
     if not args.useCameraPointCloud:
         args.cameraPointCloudNames = []
-    if args.episodeIndex == -1:
+    if args.episodeName == "":
         for f in os.listdir(args.datasetDir):
-            if f.startswith("episode") and not f.endswith(".tar.gz"):
-                args.episodeIndex = int(f[7:])
-                print("episode index ", args.episodeIndex, "processing")
+            if not f.endswith(".tar.gz"):
+                args.episodeName = f
+                print("episode name:", args.episodeName, "processing")
                 operator = Operator(args)
                 operator.process()
-                print("episode index ", args.episodeIndex, "done")
+                print("episode name:", args.episodeName, "done")
     else:
         operator = Operator(args)
         operator.process()

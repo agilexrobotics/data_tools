@@ -93,7 +93,7 @@ class RosOperator(Node):
         joint_state_msg.header = Header()
         joint_state_msg.header.stamp = self.get_clock().now().to_msg()
         joint_state_msg.name = [f'joint{i}' for i in range(len(joint_state))]
-        joint_state_msg.position = joint_state
+        joint_state_msg.position = [float(v) for v in joint_state]
         self.arm_joint_state_publishers[index].publish(joint_state_msg)
 
     def publish_arm_end_pose(self, index, end_pose):
@@ -137,8 +137,8 @@ class RosOperator(Node):
         gripper_msg.header = Header()
         gripper_msg.header.frame_id = "map"
         gripper_msg.header.stamp = self.get_clock().now().to_msg()
-        gripper_msg.angle = encoder_angle
-        gripper_msg.distance = encoder_distance
+        gripper_msg.angle = float(encoder_angle)
+        gripper_msg.distance = float(encoder_distance)
         self.gripper_encoder_publishers[index].publish(gripper_msg)
 
     def publish_imu_9axis(self, index, orientation, angular_velocity, linear_acceleration):
@@ -207,10 +207,10 @@ class RosOperator(Node):
         return pointcloud_msg
 
     def process_data(self):
-        episode_dir = os.path.join(self.args.datasetDir, "episode" + str(self.args.episodeIndex))
+        episode_dir = os.path.join(self.args.datasetDir, self.args.episodeName)
         data_path = os.path.join(episode_dir, 'data.hdf5')
         if not os.path.exists(data_path):
-            data_path = os.path.join(self.args.datasetDir, "episode" + str(self.args.episodeIndex) + '.hdf5')
+            data_path = os.path.join(self.args.datasetDir, self.args.episodeName + '.hdf5')
         self.rate = self.create_rate(self.args.publish_rate)
         with h5py.File(data_path, 'r') as root:
             max_action_len = root['size'][()]
@@ -369,8 +369,8 @@ def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--datasetDir', action='store', type=str, help='datasetDir.',
                         default="./data", required=False)
-    parser.add_argument('--episodeIndex', action='store', type=int, help='Episode index.',
-                        default=0, required=False)
+    parser.add_argument('--episodeName', action='store', type=str, help='Episode name.',
+                        default="", required=False)
     parser.add_argument('--publishIndex', action='store', type=int, help='publishIndex',
                         default=-1, required=False)
     parser.add_argument('--type', action='store', type=str, help='type',

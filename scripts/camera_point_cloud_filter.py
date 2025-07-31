@@ -131,7 +131,7 @@ def color_depth_to_point_cloud(color_image_path, depth_image_path, color_intrins
 class Operator:
     def __init__(self, args):
         self.args = args
-        self.episodeDir = os.path.join(self.args.datasetDir, "episode" + str(self.args.episodeIndex))
+        self.episodeDir = os.path.join(self.args.datasetDir, self.args.episodeName)
 
         self.cameraColorDirs = [os.path.join(self.episodeDir, "camera/color/" + self.args.cameraNames[i]) for i in range(len(self.args.cameraNames))]
         self.cameraColorConfigDirs = [os.path.join(self.cameraColorDirs[i], "config.json") for i in range(len(self.args.cameraNames))]
@@ -379,8 +379,8 @@ def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--datasetDir', action='store', type=str, help='datasetDir',
                         default="/home/agilex/data", required=False)
-    parser.add_argument('--episodeIndex', action='store', type=int, help='episodeIndex',
-                        default=-1, required=False)
+    parser.add_argument('--episodeName', action='store', type=str, help='episodeName',
+                        default="", required=False)
     parser.add_argument('--type', action='store', type=str, help='type',
                         default="aloha", required=False)
     parser.add_argument('--pointNum', action='store', type=int, help='point_num',
@@ -404,14 +404,14 @@ def get_arguments():
 
 def main():
     args = get_arguments()
-    if args.episodeIndex == -1:
+    if args.episodeName == "":
         for f in os.listdir(args.datasetDir):
-            if f.startswith("episode") and not f.endswith(".tar.gz"):
-                args.episodeIndex = int(f[7:])
-                print("episode index ", args.episodeIndex, "processing")
+            if not f.endswith(".tar.gz"):
+                args.episodeName = f
+                print("episode name:", args.episodeName, "processing")
                 operator = Operator(args)
                 operator.process()
-                print("episode index ", args.episodeIndex, "done")
+                print("episode name:", args.episodeName, "done")
     else:
         operator = Operator(args)
         operator.process()

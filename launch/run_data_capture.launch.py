@@ -47,6 +47,7 @@ def generate_launch_description():
                 }
             ],
             output='screen',
-            prefix='gnome-terminal --'  # 使用 xterm 来运行节点
+            # prefix='gnome-terminal --'
+            prefix='gnome-terminal -- bash -c "$0 $@; echo \\"程序已退出，按回车关闭终端...\\"; read"'  # 保持终端窗口打开
         )
     ])
