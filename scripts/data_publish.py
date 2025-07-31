@@ -64,11 +64,10 @@ def pcd_to_msg(points):
 
 # 保存数据函数
 def process_data(args, ros_operator):
-
-    episode_dir = os.path.join(args.datasetDir, "episode" + str(args.episodeIndex))
+    episode_dir = os.path.join(args.datasetDir, args.episodeName)
     data_path = os.path.join(episode_dir, 'data.hdf5')
     if not os.path.exists(data_path):
-        data_path = os.path.join(args.datasetDir, "episode" + str(args.episodeIndex) + '.hdf5')
+        data_path = os.path.join(args.datasetDir, args.episodeName + '.hdf5')
     rate = rospy.Rate(args.publish_rate)
     with h5py.File(data_path, 'r') as root:
         max_action_len = root['size'][()]
@@ -356,8 +355,8 @@ def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--datasetDir', action='store', type=str, help='datasetDir.',
                         default="./data", required=False)
-    parser.add_argument('--episodeIndex', action='store', type=int, help='Episode index.',
-                        default=0, required=False)
+    parser.add_argument('--episodeName', action='store', type=str, help='Episode name.',
+                        default="", required=False)
     parser.add_argument('--publishIndex', action='store', type=int, help='publishIndex',
                         default=-1, required=False)
     parser.add_argument('--type', action='store', type=str, help='type',
