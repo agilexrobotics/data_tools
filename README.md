@@ -169,6 +169,20 @@ roslaunch data_tools run_data_sync.launch type:=single_pika_teleop datasetDir:={
 # double pika teleop
 roslaunch data_tools run_data_sync.launch type:=multi_pika_teleop datasetDir:={data_path}
 ```
+or
+```shell
+source ~/{YOUR_WS}/devel/setup.sh
+# aloha
+python3 data_sync.py --type aloha --datasetDir {data_path}
+# single pika
+python3 data_sync.py --type single_pika --datasetDir {data_path}
+# double pika
+python3 data_sync.py --type multi_pika --datasetDir {data_path}
+# single pika teleop
+python3 data_sync.py --type single_pika_teleop --datasetDir {data_path}
+# double pika teleop
+python3 data_sync.py --type multi_pika_teleop --datasetDir {data_path}
+```
 
 After execution, a `sync.txt` file will be generated in the path of each specific dataset. For example, the image data synchronization index file path: `{data_path}/episode0/camera/color/left/sync.txt`.
 
@@ -253,15 +267,15 @@ use hdf5 data
 ```shell
 source ~/{YOUR_WS}/devel/setup.sh
 # aloha
-python3 data_publish.py --type aloha --datasetDir {data_path} --episodeIndex 0
+python3 data_publish.py --type aloha --datasetDir {data_path} --episodeName episode0
 # single pika
-python3 data_publish.py --type single_pika --datasetDir {data_path} --episodeIndex 0
+python3 data_publish.py --type single_pika --datasetDir {data_path} --episodeName episode0
 # double pika
-python3 data_publish.py --type multi_pika --datasetDir {data_path} --episodeIndex 0
+python3 data_publish.py --type multi_pika --datasetDir {data_path} --episodeName episode0
 # single pika teleop
-python3 data_publish.py --type single_pika_teleop --datasetDir {data_path} --episodeIndex 0
+python3 data_publish.py --type single_pika_teleop --datasetDir {data_path} --episodeName episode0
 # double pika teleop
-python3 data_publish.py --type multi_pika_teleop --datasetDir {data_path} --episodeIndex 0
+python3 data_publish.py --type multi_pika_teleop --datasetDir {data_path} --episodeName episode0
 ```
 ## How to load data from an HDF5 file for training
 
