@@ -531,7 +531,7 @@ public:
                 transform = tfBuffer->lookupTransform(cameraColorParentFrames.at(index), cameraColorFrameIds.at(index), tf2::TimePointZero);
                 break;
             } catch (const tf2::TransformException & ex) {
-                continue;
+                return;
             }
 		}
 		double x = transform.transform.translation.x;
@@ -604,7 +604,7 @@ public:
                 transform = tfBuffer->lookupTransform(cameraDepthParentFrames.at(index), cameraDepthFrameIds.at(index), tf2::TimePointZero);
                 break;
             } catch (const tf2::TransformException & ex) {
-                continue;
+                return;
             }
 		}
 		double x = transform.transform.translation.x;
@@ -677,7 +677,7 @@ public:
                 transform = tfBuffer->lookupTransform(cameraPointCloudParentFrames.at(index), cameraPointCloudFrameIds.at(index), tf2::TimePointZero);
                 break;
             } catch (const tf2::TransformException & ex) {
-                continue;
+                return;
             }
 		}
 		double x = transform.transform.translation.x;
@@ -1805,7 +1805,8 @@ class DataCaptureService: public rclcpp::Node{
                         }
                         rclcpp::sleep_for(std::chrono::seconds(1));
                         exec = new rclcpp::executors::MultiThreadedExecutor;
-                        dataCapture = std::make_shared<DataCapture>(name, options, datasetDir, episodeIndex, hz, timeout, cropTime, true);
+                        std::string workerName = name + "_worker_" + std::to_string(rclcpp::Clock().now().nanoseconds());
+                        dataCapture = std::make_shared<DataCapture>(workerName, options, datasetDir, episodeIndex, hz, timeout, cropTime, true);
                         if(req->episode_index == -1){
                             this->episodeIndex++;
                         }
@@ -1840,7 +1841,8 @@ class DataCaptureService: public rclcpp::Node{
                             }
                             rclcpp::sleep_for(std::chrono::seconds(1));
                             exec = new rclcpp::executors::MultiThreadedExecutor;
-                            dataCapture = std::make_shared<DataCapture>(name, options, datasetDir, episodeIndex, hz, timeout, cropTime, true);
+                            std::string workerName = name + "_worker_" + std::to_string(rclcpp::Clock().now().nanoseconds());
+                            dataCapture = std::make_shared<DataCapture>(workerName, options, datasetDir, episodeIndex, hz, timeout, cropTime, true);
                             if(req->episode_index == -1){
                                 this->episodeIndex++;
                             }
@@ -1873,7 +1875,8 @@ class DataCaptureService: public rclcpp::Node{
         }
         else{
             exec = new rclcpp::executors::MultiThreadedExecutor;
-            dataCapture = std::make_shared<DataCapture>(name, options, datasetDir, episodeIndex, hz, timeout);
+            std::string workerName = name + "_worker_" + std::to_string(rclcpp::Clock().now().nanoseconds());
+            dataCapture = std::make_shared<DataCapture>(workerName, options, datasetDir, episodeIndex, hz, timeout);
             exec->add_node(dataCapture);
             ((DataCapture *)dataCapture.get())->instructionSaving(instructions);
             ((DataCapture *)dataCapture.get())->run();
@@ -1898,6 +1901,5 @@ int main(int argc, char** argv)
     exec.add_node(dataCaptureService);
     exec.spin();
     rclcpp::shutdown();
-    std::cout<<"Done"<<std::endl;
     return 0;
 }

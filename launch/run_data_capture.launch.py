@@ -33,7 +33,7 @@ def generate_launch_description():
         Node(
             package='data_tools',
             executable='data_tools_dataCapture',
-            name='data_capture',
+            # name='data_capture',
             parameters=[
                 [TextSubstitution(text=os.path.join(share_dir, 'config/')), type, TextSubstitution(text='_data_params.yaml')],
                 {
@@ -48,6 +48,6 @@ def generate_launch_description():
             ],
             output='screen',
             # prefix='gnome-terminal --'
-            prefix='gnome-terminal -- bash -c "$0 $@; echo \\"程序已退出，按回车关闭终端...\\"; read"'  # 保持终端窗口打开
+            prefix='gnome-terminal -- bash -c "$0 $@; echo \\"The program has exited, press enter to close the terminal...\\"; read"'  # 保持终端窗口打开
         )
     ])
