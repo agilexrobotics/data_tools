@@ -509,8 +509,7 @@ public:
                 listener.lookupTransform(cameraColorParentFrames.at(index), cameraColorFrameIds.at(index), ros::Time(0), transform);
                 break;
             } catch(tf::TransformException &ex) {
-                ros::Duration(1.0).sleep();
-                continue;
+                return;
             }
 		}
 		double x = transform.getOrigin().x();
@@ -585,8 +584,7 @@ public:
                 listener.lookupTransform(cameraDepthParentFrames.at(index), cameraDepthFrameIds.at(index), ros::Time(0), transform);
                 break;
             } catch (tf::TransformException &ex) {
-                ros::Duration(1.0).sleep();
-                continue;
+                return;
             }
 		}
 		double x = transform.getOrigin().x();
@@ -661,8 +659,7 @@ public:
                 listener.lookupTransform(cameraPointCloudParentFrames.at(index), cameraPointCloudFrameIds.at(index), ros::Time(0), transform);
                 break;
             } catch (tf::TransformException &ex) {
-                ros::Duration(1.0).sleep();
-                continue;
+                return;
             }
 		}
 		double x = transform.getOrigin().x();
