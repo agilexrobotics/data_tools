@@ -150,12 +150,12 @@ class Operator:
                     count += 1
                 if size_count == 0:
                     size_count = count
-            with open(self.cameraColorConfigDirs[i], 'r') as color_config_file:
-                data = json.load(color_config_file)
-                color_intrinsic = np.array(data["K"]).reshape(3, 3)
-                color_extrinsic = create_transformation_matrix(data["parent_frame"]['x'],  data["parent_frame"]['y'], data["parent_frame"]['z'], data["parent_frame"]['roll'], data["parent_frame"]['pitch'], data["parent_frame"]['yaw'])
-                data_dict[f'camera/colorIntrinsic/{self.args.cameraColorNames[i]}'] = color_intrinsic
-                data_dict[f'camera/colorExtrinsic/{self.args.cameraColorNames[i]}'] = color_extrinsic
+            # with open(self.cameraColorConfigDirs[i], 'r') as color_config_file:
+            #     data = json.load(color_config_file)
+            #     color_intrinsic = np.array(data["K"]).reshape(3, 3)
+            #     color_extrinsic = create_transformation_matrix(data["parent_frame"]['x'],  data["parent_frame"]['y'], data["parent_frame"]['z'], data["parent_frame"]['roll'], data["parent_frame"]['pitch'], data["parent_frame"]['yaw'])
+            #     data_dict[f'camera/colorIntrinsic/{self.args.cameraColorNames[i]}'] = color_intrinsic
+            #     data_dict[f'camera/colorExtrinsic/{self.args.cameraColorNames[i]}'] = color_extrinsic
         for i in range(len(self.args.cameraDepthNames)):
             with open(self.cameraDepthSyncDirs[i], 'r') as lines:
                 count = 0
@@ -176,12 +176,12 @@ class Operator:
                     count += 1
                 if size_count == 0:
                     size_count = count
-            with open(self.cameraDepthConfigDirs[i], 'r') as depth_config_file:
-                data = json.load(depth_config_file)
-                depth_intrinsic = np.array(data["K"]).reshape(3, 3)
-                depth_extrinsic = create_transformation_matrix(data["parent_frame"]['x'],  data["parent_frame"]['y'], data["parent_frame"]['z'], data["parent_frame"]['roll'], data["parent_frame"]['pitch'], data["parent_frame"]['yaw'])
-                data_dict[f'camera/depthIntrinsic/{self.args.cameraDepthNames[i]}'] = depth_intrinsic
-                data_dict[f'camera/depthExtrinsic/{self.args.cameraDepthNames[i]}'] = depth_extrinsic
+            # with open(self.cameraDepthConfigDirs[i], 'r') as depth_config_file:
+            #     data = json.load(depth_config_file)
+            #     depth_intrinsic = np.array(data["K"]).reshape(3, 3)
+            #     depth_extrinsic = create_transformation_matrix(data["parent_frame"]['x'],  data["parent_frame"]['y'], data["parent_frame"]['z'], data["parent_frame"]['roll'], data["parent_frame"]['pitch'], data["parent_frame"]['yaw'])
+            #     data_dict[f'camera/depthIntrinsic/{self.args.cameraDepthNames[i]}'] = depth_intrinsic
+            #     data_dict[f'camera/depthExtrinsic/{self.args.cameraDepthNames[i]}'] = depth_extrinsic
         for i in range(len(self.args.cameraPointCloudNames)):
             with open(self.cameraPointCloudSyncDirs[i], 'r') as lines:
                 count = 0
@@ -199,12 +199,12 @@ class Operator:
                     count += 1
                 if size_count == 0:
                     size_count = count
-            with open(self.cameraPointCloudConfigDirs[i], 'r') as point_cloud_config_file:
-                data = json.load(point_cloud_config_file)
-                point_cloud_intrinsic = np.array(data["K"]).reshape(3, 3)
-                point_cloud_extrinsic = create_transformation_matrix(data["parent_frame"]['x'], data["parent_frame"]['y'], data["parent_frame"]['z'], data["parent_frame"]['roll'], data["parent_frame"]['pitch'], data["parent_frame"]['yaw'])
-                data_dict[f'camera/pointCloudIntrinsic/{self.args.cameraPointCloudNames[i]}'] = point_cloud_intrinsic
-                data_dict[f'camera/pointCloudExtrinsic/{self.args.cameraPointCloudNames[i]}'] = point_cloud_extrinsic
+            # with open(self.cameraPointCloudConfigDirs[i], 'r') as point_cloud_config_file:
+            #     data = json.load(point_cloud_config_file)
+            #     point_cloud_intrinsic = np.array(data["K"]).reshape(3, 3)
+            #     point_cloud_extrinsic = create_transformation_matrix(data["parent_frame"]['x'], data["parent_frame"]['y'], data["parent_frame"]['z'], data["parent_frame"]['roll'], data["parent_frame"]['pitch'], data["parent_frame"]['yaw'])
+            #     data_dict[f'camera/pointCloudIntrinsic/{self.args.cameraPointCloudNames[i]}'] = point_cloud_intrinsic
+            #     data_dict[f'camera/pointCloudExtrinsic/{self.args.cameraPointCloudNames[i]}'] = point_cloud_extrinsic
         for i in range(len(self.args.armJointStateNames)):
             with open(self.armJointStateSyncDirs[i], 'r') as lines:
                 count = 0
