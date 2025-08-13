@@ -253,7 +253,7 @@ def main():
     parser.add_argument('--episodeIndex', action='store', type=int, help='Episode index.',
                         default=-1, required=False)
     parser.add_argument('--alohaYaml', action='store', type=str, help='alohaYaml.',
-                        default="/home/agilex/ros2_ws/src/data_tools/config/aloha_data_params.yaml", required=False)
+                        default="../config/aloha_data_params.yaml", required=False)
     args = parser.parse_args()
     print("args:")
     print(f" --datasetDir: {args.datasetDir}")
