@@ -26,7 +26,7 @@ def generate_launch_description():
         Node(
             package='data_tools',
             executable='data_tools_dataSync',
-            name='data_sync',
+            # name='data_sync',
             parameters=[
                 [TextSubstitution(text=os.path.join(share_dir, 'config/')), type, TextSubstitution(text='_data_params.yaml')],
                 {

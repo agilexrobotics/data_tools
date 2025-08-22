@@ -996,7 +996,8 @@ class DataPublishService: public rclcpp::Node{
         declare_parameter("publishIndex", -1);get_parameter("publishIndex", publishIndex);
         declare_parameter("publishRate", 30);get_parameter("publishRate", publishRate);
         exec = new rclcpp::executors::SingleThreadedExecutor;
-        dataPublish = std::make_shared<DataPublish>(name, options, datasetDir, episodeIndex, publishIndex, publishRate);
+        std::string workerName = name + "_worker_" + std::to_string(rclcpp::Clock().now().nanoseconds());
+        dataPublish = std::make_shared<DataPublish>(workerName, options, datasetDir, episodeIndex, publishIndex, publishRate);
         exec->add_node(dataPublish);
         ((DataPublish *)dataPublish.get())->run();
         exec->spin();

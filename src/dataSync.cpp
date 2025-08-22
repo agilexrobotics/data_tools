@@ -691,7 +691,8 @@ class DataSyncService: public rclcpp::Node{
                     std::cout<<fileName<<" processing"<<std::endl;
                     fileName.replace(0, 7, "");
                     exec = new rclcpp::executors::SingleThreadedExecutor;
-                    dataSync = std::make_shared<DataSync>(name, options, datasetDir, std::stoi(fileName), timeDiffLimit);
+                    std::string workerName = name + "_worker_" + std::to_string(rclcpp::Clock().now().nanoseconds());
+                    dataSync = std::make_shared<DataSync>(workerName, options, datasetDir, std::stoi(fileName), timeDiffLimit);
                     exec->add_node(dataSync);
                     ((DataSync *)dataSync.get())->sync();
                     delete exec;
@@ -703,7 +704,8 @@ class DataSyncService: public rclcpp::Node{
             std::cout<<"Done"<<std::endl;
         }else{
             exec = new rclcpp::executors::SingleThreadedExecutor;
-            dataSync = std::make_shared<DataSync>(name, options, datasetDir, episodeIndex, timeDiffLimit);
+            std::string workerName = name + "_worker_" + std::to_string(rclcpp::Clock().now().nanoseconds());
+            dataSync = std::make_shared<DataSync>(workerName, options, datasetDir, episodeIndex, timeDiffLimit);
             exec->add_node(dataSync);
             ((DataSync *)dataSync.get())->sync();
             rclcpp::shutdown();

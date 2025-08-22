@@ -28,7 +28,7 @@ def generate_launch_description():
         Node(
             package='data_tools',
             executable='data_tools_dataPublish',
-            name='data_publish',
+            # name='data_publish',
             parameters=[
                 [TextSubstitution(text=os.path.join(share_dir, 'config/')), type, TextSubstitution(text='_data_params.yaml')],
                 {
