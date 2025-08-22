@@ -175,6 +175,9 @@ public:
     int timeout;
     double cropTime;
 
+    std::vector<sensor_msgs::msg::JointState> armJointStateList;
+    std::vector<bool> armJointStateChangeList;
+
     DataCapture(std::string name, const rclcpp::NodeOptions & options, std::string datasetDir, int episodeIndex, int hz, int timeout, double cropTime=-1, bool useService=false): DataUtility(name, options, datasetDir, episodeIndex) {
         this->useService = useService;
         this->hz = hz;
@@ -225,6 +228,9 @@ public:
         subCameraColorConfigs = std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr>(cameraColorNames.size());
         subCameraDepthConfigs = std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr>(cameraDepthNames.size());
         subCameraPointCloudConfigs = std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr>(cameraPointCloudNames.size());
+
+        armJointStateList = std::vector<sensor_msgs::msg::JointState>(armJointStateNames.size());
+        armJointStateChangeList = std::vector<bool>(armJointStateNames.size());
 
         pubCaptureStatus = create_publisher<data_msgs::msg::CaptureStatus>("/data_tools_dataCapture/status", 2000);
 
@@ -327,6 +333,10 @@ public:
         for(int i = 0; i < armJointStateNames.size(); i++){
             unused = system((std::string("mkdir -p ") + armJointStateDirs.at(i)).c_str());
             subArmJointStates[i] = create_subscription<sensor_msgs::msg::JointState>(armJointStateTopics[i], 2000, [this, i](const sensor_msgs::msg::JointState::SharedPtr msg) { this->armJointStateHandler(msg, i);});
+            armJointStateChangeList[i] = false;
+            sensor_msgs::msg::JointState msg;
+            msg.header.stamp = rclcpp::Time(0);
+            armJointStateList[i] = msg;
         }
         for(int i = 0; i < armEndPoseNames.size(); i++){
             unused = system((std::string("mkdir -p ") + armEndPoseDirs.at(i)).c_str());
@@ -736,6 +746,14 @@ public:
     }
 
     void armJointStateHandler(const sensor_msgs::msg::JointState::SharedPtr& msg, const int& index){
+        if(rclcpp::Time(armJointStateList.at(index).header.stamp).seconds() != 0 && !armJointStateChangeList.at(index)){
+            for(int i=0; i<msg->position.size(); i++){
+                if(msg->position.at(i) - armJointStateList.at(index).position.at(i) != 0){
+                    armJointStateChangeList.at(index) = true;
+                }
+            }
+        }
+        armJointStateList.at(index) = *msg;
         armJointStateMsgDeques.at(index).push_back(*msg);
         std::lock_guard<std::mutex> lock(armJointStateMsgCountMtxs.at(index));
         if(armJointStateMsgCounts.at(index) == 0){
@@ -1211,11 +1229,11 @@ public:
     }
 
     void instructionSaving(std::string instructions){
-        if (instructions.front() != '[' || instructions.back() != ']') {
+        if (instructions.front() != '\\' || instructions.back() != ']') {
              std::cout << "Error parsing JSON: " << instructions << std::endl;
             return;
         }
-        std::string content = instructions.substr(1, instructions.size() - 2);
+        std::string content = instructions.substr(2, instructions.size() - 4);
         std::istringstream iss(content);
         std::string token;
         std::string jsonArray = "[";
@@ -1478,6 +1496,9 @@ public:
                     }
                 }else{
                     armJointStateMsgLastUpHzTimes.at(i) = rclcpp::Clock().now().seconds();
+                }
+                if(!armJointStateChangeList.at(i)){
+                    std::cout<<"armJointState "<<armJointStateTopics.at(i)<<" not changing!!!"<<std::endl;
                 }
                 armJointStateMsgLastCounts.at(i) = count;
                 allCount += count;
