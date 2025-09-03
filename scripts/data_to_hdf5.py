@@ -134,7 +134,9 @@ class Operator:
         for i in range(len(self.args.cameraColorNames)):
             with open(self.cameraColorSyncDirs[i], 'r') as lines:
                 count = 0
-                for line in lines:
+                for t, line in enumerate(lines):
+                    if t % self.args.timeInterval != 0:
+                        continue
                     line = line.replace('\n', '')
                     time = float(line[:line.rfind(".")])
                     if len(data_dict[f'timestamp']) <= count:
@@ -159,7 +161,9 @@ class Operator:
         for i in range(len(self.args.cameraDepthNames)):
             with open(self.cameraDepthSyncDirs[i], 'r') as lines:
                 count = 0
-                for line in lines:
+                for t, line in enumerate(lines):
+                    if t % self.args.timeInterval != 0:
+                        continue
                     line = line.replace('\n', '')
                     time = float(line[:line.rfind(".")])
                     if len(data_dict[f'timestamp']) <= count:
@@ -185,7 +189,9 @@ class Operator:
         for i in range(len(self.args.cameraPointCloudNames)):
             with open(self.cameraPointCloudSyncDirs[i], 'r') as lines:
                 count = 0
-                for line in lines:
+                for t, line in enumerate(lines):
+                    if t % self.args.timeInterval != 0:
+                        continue
                     line = line.replace('\n', '')
                     time = float(line[:line.rfind(".")])
                     if len(data_dict[f'timestamp']) <= count:
@@ -208,7 +214,9 @@ class Operator:
         for i in range(len(self.args.armJointStateNames)):
             with open(self.armJointStateSyncDirs[i], 'r') as lines:
                 count = 0
-                for line in lines:
+                for t, line in enumerate(lines):
+                    if t % self.args.timeInterval != 0:
+                        continue
                     line = line.replace('\n', '')
                     time = float(line[:line.rfind(".")])
                     if len(data_dict[f'timestamp']) <= count:
@@ -217,6 +225,17 @@ class Operator:
                         data_dict[f'timestamp'][count] = time if time < data_dict[f'timestamp'][count] else data_dict[f'timestamp'][count]
                     with open(os.path.join(self.armJointStateDirs[i], line), 'r') as file:
                         data = json.load(file)
+                        limit_lower = np.array([-2.6179, 0, -2.967, -1.745, -1.22, -2.09439, 0])
+                        limit_upper = np.array([2.6179, 3.14, 0, 1.745, 1.22, 2.09439, 0.10])
+                        position = np.array(data['position'])
+                        out_limit = ((position - limit_lower) < -0.1).any() | ((limit_upper - position) < -0.1).any()
+                        if out_limit:
+                            print(self.args.armJointStateNames[i], position)
+                            min_val, flat_idx = (position - limit_lower).min(), (position - limit_lower).argmin()
+                            print("lower:", min_val, flat_idx)
+                            min_val, flat_idx = (limit_upper - position).min(), (position - limit_lower).argmin()
+                            print("upper:", min_val, flat_idx)
+                            print("out_limit!!!!!!!!!!!!!!!!!!!!!!!!!!")
                         data_dict[f'arm/jointStateVelocity/{self.args.armJointStateNames[i]}'].append(np.array(data['velocity']))
                         data_dict[f'arm/jointStateEffort/{self.args.armJointStateNames[i]}'].append(np.array(data['effort']))
                         data_dict[f'arm/jointStatePosition/{self.args.armJointStateNames[i]}'].append(np.array(data['position']))
@@ -226,7 +245,9 @@ class Operator:
         for i in range(len(self.args.armEndPoseNames)):
             with open(self.armEndPoseSyncDirs[i], 'r') as lines:
                 count = 0
-                for line in lines:
+                for t, line in enumerate(lines):
+                    if t % self.args.timeInterval != 0:
+                        continue
                     line = line.replace('\n', '')
                     time = float(line[:line.rfind(".")])
                     if len(data_dict[f'timestamp']) <= count:
@@ -245,7 +266,9 @@ class Operator:
         for i in range(len(self.args.localizationPoseNames)):
             with open(self.localizationPoseSyncDirs[i], 'r') as lines:
                 count = 0
-                for line in lines:
+                for t, line in enumerate(lines):
+                    if t % self.args.timeInterval != 0:
+                        continue
                     line = line.replace('\n', '')
                     time = float(line[:line.rfind(".")])
                     if len(data_dict[f'timestamp']) <= count:
@@ -265,7 +288,9 @@ class Operator:
         for i in range(len(self.args.gripperEncoderNames)):
             with open(self.gripperEncoderSyncDirs[i], 'r') as lines:
                 count = 0
-                for line in lines:
+                for t, line in enumerate(lines):
+                    if t % self.args.timeInterval != 0:
+                        continue
                     line = line.replace('\n', '')
                     time = float(line[:line.rfind(".")])
                     if len(data_dict[f'timestamp']) <= count:
@@ -282,7 +307,9 @@ class Operator:
         for i in range(len(self.args.imu9AxisNames)):
             with open(self.imu9AxisSyncDirs[i], 'r') as lines:
                 count = 0
-                for line in lines:
+                for t, line in enumerate(lines):
+                    if t % self.args.timeInterval != 0:
+                        continue
                     line = line.replace('\n', '')
                     time = float(line[:line.rfind(".")])
                     if len(data_dict[f'timestamp']) <= count:
@@ -300,7 +327,9 @@ class Operator:
         for i in range(len(self.args.lidarPointCloudNames)):
             with open(self.lidarPointCloudSyncDirs[i], 'r') as lines:
                 count = 0
-                for line in lines:
+                for t, line in enumerate(lines):
+                    if t % self.args.timeInterval != 0:
+                        continue
                     line = line.replace('\n', '')
                     time = float(line[:line.rfind(".")])
                     if len(data_dict[f'timestamp']) <= count:
@@ -314,7 +343,9 @@ class Operator:
         for i in range(len(self.args.robotBaseVelNames)):
             with open(self.robotBaseVelSyncDirs[i], 'r') as lines:
                 count = 0
-                for line in lines:
+                for t, line in enumerate(lines):
+                    if t % self.args.timeInterval != 0:
+                        continue
                     line = line.replace('\n', '')
                     time = float(line[:line.rfind(".")])
                     if len(data_dict[f'timestamp']) <= count:
@@ -330,7 +361,9 @@ class Operator:
         for i in range(len(self.args.liftMotorNames)):
             with open(self.liftMotorSyncDirs[i], 'r') as lines:
                 count = 0
-                for line in lines:
+                for t, line in enumerate(lines):
+                    if t % self.args.timeInterval != 0:
+                        continue
                     line = line.replace('\n', '')
                     time = float(line[:line.rfind(".")])
                     if len(data_dict[f'timestamp']) <= count:
@@ -361,6 +394,8 @@ def get_arguments():
                         default=True, required=False)
     parser.add_argument('--type', action='store', type=str, help='type',
                         default="aloha", required=False)
+    parser.add_argument('--timeInterval', action='store', type=str, help='timeInterval',
+                        default=1, required=False)
     parser.add_argument('--cameraColorNames', action='store', type=str, help='cameraColorNames',
                         default=[], required=False)
     parser.add_argument('--cameraDepthNames', action='store', type=str, help='cameraDepthNames',

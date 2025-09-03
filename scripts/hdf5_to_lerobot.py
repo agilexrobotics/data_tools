@@ -10,8 +10,8 @@ import shutil
 from typing import Literal
 
 import h5py
-from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
-# from lerobot.common.datasets.push_dataset_to_hub._download_raw import download_raw
+# from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
+from lerobot.datasets.lerobot_dataset import LeRobotDataset
 import numpy as np
 import torch
 import tqdm
@@ -27,8 +27,8 @@ import yaml
 class DatasetConfig:
     use_videos: bool = True
     tolerance_s: float = 0.0001
-    image_writer_processes: int = 10
-    image_writer_threads: int = 5
+    image_writer_processes: int = 8
+    image_writer_threads: int = 8
     video_backend: str | None = None
 
 
@@ -123,42 +123,44 @@ def load_episode_data(
     episode_path: Path,
 ):
     with h5py.File(episode_path, "r") as episode:
-        states = torch.from_numpy(
-            np.concatenate(
-                [episode[f"arm/jointStatePosition/{name}"][()] for name in args.armJointStateNames if "puppet" in name] + \
-                [episode[f"arm/endPose/{name}"][()] for name in args.armEndPoseNames if "puppet" in name], axis=1
+        try:
+            states = torch.from_numpy(
+                np.concatenate(
+                    [episode[f"arm/jointStatePosition/{name}"][()] for name in args.armJointStateNames if "puppet" in name] + \
+                    [episode[f"arm/endPose/{name}"][()] for name in args.armEndPoseNames if "puppet" in name], axis=1
+                )
             )
-        )
-        actions = torch.from_numpy(
-            np.concatenate(
-                [episode[f"arm/jointStatePosition/{name}"][()] for name in args.armJointStateNames if "master" in name] + \
-                [episode[f"arm/endPose/{name}"][()] for name in args.armEndPoseNames if "master" in name], axis=1
+            actions = torch.from_numpy(
+                np.concatenate(
+                    [episode[f"arm/jointStatePosition/{name}"][()] for name in args.armJointStateNames if "master" in name] + \
+                    [episode[f"arm/endPose/{name}"][()] for name in args.armEndPoseNames if "master" in name], axis=1
+                )
             )
-        )
-        colors = {}
-        for camera in args.cameraColorNames:
-            colors[camera] = []
-            for i in range(episode[f'camera/color/{camera}'].shape[0]):
-                colors[camera].append(cv2.cvtColor(cv2.imread(
-                    os.path.join(str(episode_path.resolve())[:-9], episode[f'camera/color/{camera}'][i].decode('utf-8')),
-                    cv2.IMREAD_UNCHANGED), cv2.COLOR_BGR2RGB))
-            colors[camera] = colors[camera]
-        depths = {}
-        # for camera in args.cameraDepthNames:
-        #     depths[camera] = []
-        #     for i in range(episode[f'camera/depth/{camera}'].shape[0]):
-        #         depths[camera].append(cv2.imread(
-        #             os.path.join(str(episode_path.resolve())[:-9], episode[f'camera/depth/{camera}'][i].decode('utf-8')),
-        #             cv2.IMREAD_UNCHANGED))
-        pointclouds = {}
-        if args.useCameraPointCloud:
-            for camera in args.cameraPointCloudNames:
-                pointclouds[camera] = []
-                for i in range(episode[f'camera/pointCloud/{camera}'].shape[0]):
-                    pointclouds[camera].append(np.load(
-                        os.path.join(str(episode_path.resolve())[:-9], episode[f'camera/color/{camera}'][i].decode('utf-8'))))
-    return colors, depths, pointclouds, states, actions
-
+            colors = {}
+            for camera in args.cameraColorNames:
+                colors[camera] = []
+                for i in range(episode[f'camera/color/{camera}'].shape[0]):
+                    colors[camera].append(cv2.cvtColor(cv2.imread(
+                        os.path.join(str(episode_path.resolve())[:-9], episode[f'camera/color/{camera}'][i].decode('utf-8')),
+                        cv2.IMREAD_UNCHANGED), cv2.COLOR_BGR2RGB))
+                colors[camera] = colors[camera]
+            depths = {}
+            # for camera in args.cameraDepthNames:
+            #     depths[camera] = []
+            #     for i in range(episode[f'camera/depth/{camera}'].shape[0]):
+            #         depths[camera].append(cv2.imread(
+            #             os.path.join(str(episode_path.resolve())[:-9], episode[f'camera/depth/{camera}'][i].decode('utf-8')),
+            #             cv2.IMREAD_UNCHANGED))
+            pointclouds = {}
+            if args.useCameraPointCloud:
+                for camera in args.cameraPointCloudNames:
+                    pointclouds[camera] = []
+                    for i in range(episode[f'camera/pointCloud/{camera}'].shape[0]):
+                        pointclouds[camera].append(np.load(
+                            os.path.join(str(episode_path.resolve())[:-9], episode[f'camera/color/{camera}'][i].decode('utf-8'))))
+            return colors, depths, pointclouds, states, actions
+        except:
+            return None, None, None, None, None
 
 def populate_dataset(
     args,
@@ -166,32 +168,35 @@ def populate_dataset(
     hdf5_files: list[Path],
     task: str,
 ) -> LeRobotDataset:
+    error_file = []
     episodes = range(len(hdf5_files))
-
     for ep_idx in tqdm.tqdm(episodes):
         episode_path = hdf5_files[ep_idx]
 
         colors, depths, pointclouds, states, actions = load_episode_data(args, episode_path)
-        num_frames = states.shape[0]
+        if colors is not None:
+            num_frames = states.shape[0]
 
-        for i in range(num_frames):
-            frame = {
-                'task': task,
-                "observation.state": states[i],
-                "action": actions[i],
-            }
-            for camera, color in colors.items():
-                frame[f"observation.images.{camera}"] = color[i]
-            # for camera, depth in depths.items():
-            #     frame[f"observation.depths.{camera}"] = depth[i]
-            if args.useCameraPointCloud:
-                for camera, pointcloud in pointclouds.items():
-                    frame[f"observation.pointClouds.{camera}"] = pointcloud[i]
+            for i in range(num_frames):
+                frame = {
+                    # 'task': task,
+                    "observation.state": states[i],
+                    "action": actions[i],
+                }
+                for camera, color in colors.items():
+                    frame[f"observation.images.{camera}"] = color[i]
+                # for camera, depth in depths.items():
+                #     frame[f"observation.depths.{camera}"] = depth[i]
+                if args.useCameraPointCloud:
+                    for camera, pointcloud in pointclouds.items():
+                        frame[f"observation.pointClouds.{camera}"] = pointcloud[i]
+                dataset.add_frame(frame, task)
+                frame = None
 
-            dataset.add_frame(frame)
-
-        dataset.save_episode()
-
+            dataset.save_episode()
+        else:
+            error_file.append(episode_path)
+    print("error:", error_file)
     return dataset
 
 

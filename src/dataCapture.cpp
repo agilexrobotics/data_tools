@@ -173,6 +173,9 @@ public:
     int timeout;
     double cropTime;
 
+    std::vector<sensor_msgs::JointState> armJointStateList;
+    std::vector<bool> armJointStateChangeList;
+
     DataCapture(std::string datasetDir, int episodeIndex, int hz, int timeout, double cropTime=-1, bool useService=false): DataUtility(datasetDir, episodeIndex) {
         this->useService = useService;
         this->hz = hz;
@@ -284,6 +287,9 @@ public:
         cameraDepthFrameIds = std::vector<std::string>(cameraDepthNames.size(), "");
         cameraPointCloudFrameIds = std::vector<std::string>(cameraPointCloudNames.size(), "");
 
+        armJointStateList = std::vector<sensor_msgs::JointState>(armJointStateNames.size());
+        armJointStateChangeList = std::vector<bool>(armJointStateNames.size());
+
         for(int i = 0; i < cameraColorNames.size(); i++){
             unused = system((std::string("mkdir -p ") + cameraColorDirs.at(i)).c_str());
             subCameraColors.push_back(nh.subscribe<sensor_msgs::Image>(cameraColorTopics[i], 2000, boost::bind(&DataCapture::cameraColorHandler, this, _1, i), ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay()));
@@ -302,6 +308,10 @@ public:
         for(int i = 0; i < armJointStateNames.size(); i++){
             unused = system((std::string("mkdir -p ") + armJointStateDirs.at(i)).c_str());
             subArmJointStates.push_back(nh.subscribe<sensor_msgs::JointState>(armJointStateTopics[i], 2000, boost::bind(&DataCapture::armJointStateHandler, this, _1, i), ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay()));
+            armJointStateChangeList[i] = false;
+            sensor_msgs::JointState msg;
+            msg.header.stamp = ros::Time().fromSec(0);
+            armJointStateList[i] = msg;
         }
         for(int i = 0; i < armEndPoseNames.size(); i++){
             unused = system((std::string("mkdir -p ") + armEndPoseDirs.at(i)).c_str());
@@ -718,6 +728,14 @@ public:
     }
 
     void armJointStateHandler(const sensor_msgs::JointState::ConstPtr& msg, const int& index){
+        if(armJointStateList.at(index).header.stamp.toSec() != 0 && !armJointStateChangeList.at(index)){
+            for(int i=0; i<msg->position.size(); i++){
+                if(msg->position.at(i) - armJointStateList.at(index).position.at(i) != 0){
+                    armJointStateChangeList.at(index) = true;
+                }
+            }
+        }
+        armJointStateList.at(index) = *msg;
         armJointStateMsgDeques.at(index).push_back(*msg);
         std::lock_guard<std::mutex> lock(armJointStateMsgCountMtxs.at(index));
         if(armJointStateMsgCounts.at(index) == 0){
@@ -1484,6 +1502,9 @@ public:
                     }
                 }else{
                     armJointStateMsgLastUpHzTimes.at(i) = ros::Time::now().toSec();
+                }
+                if(!armJointStateChangeList.at(i)){
+                    std::cout<<"armJointState "<<armJointStateTopics.at(i)<<" not changing!!!"<<std::endl;
                 }
                 armJointStateMsgLastCounts.at(i) = count;
                 allCount += count;
