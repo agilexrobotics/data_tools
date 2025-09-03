@@ -225,6 +225,17 @@ class Operator:
                         data_dict[f'timestamp'][count] = time if time < data_dict[f'timestamp'][count] else data_dict[f'timestamp'][count]
                     with open(os.path.join(self.armJointStateDirs[i], line), 'r') as file:
                         data = json.load(file)
+                        limit_lower = np.array([-2.6179, 0, -2.967, -1.745, -1.22, -2.09439, 0])
+                        limit_upper = np.array([2.6179, 3.14, 0, 1.745, 1.22, 2.09439, 0.10])
+                        position = np.array(data['position'])
+                        out_limit = ((position - limit_lower) < -0.1).any() | ((limit_upper - position) < -0.1).any()
+                        if out_limit:
+                            print(self.args.armJointStateNames[i], position)
+                            min_val, flat_idx = (position - limit_lower).min(), (position - limit_lower).argmin()
+                            print("lower:", min_val, flat_idx)
+                            min_val, flat_idx = (limit_upper - position).min(), (position - limit_lower).argmin()
+                            print("upper:", min_val, flat_idx)
+                            print("out_limit!!!!!!!!!!!!!!!!!!!!!!!!!!")
                         data_dict[f'arm/jointStateVelocity/{self.args.armJointStateNames[i]}'].append(np.array(data['velocity']))
                         data_dict[f'arm/jointStateEffort/{self.args.armJointStateNames[i]}'].append(np.array(data['effort']))
                         data_dict[f'arm/jointStatePosition/{self.args.armJointStateNames[i]}'].append(np.array(data['position']))
