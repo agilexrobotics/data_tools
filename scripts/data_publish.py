@@ -284,10 +284,10 @@ class RosOperator(Node):
                                 self.publish_lidar_point_cloud(j, packed_points)
                     for j in range(len(self.args.robot_base_vel_names)):
                         self.publish_robot_base_vel(j, root[f'/robotBase/vel/{self.args.robot_base_vel_names[j]}'][i])
-                for j in range(len(self.args.lift_motor_names)):
-                    self.ros_operator.publish_lift_motor(j, root[f'/lift/motor/{self.args.lift_motor_names[j]}'][i])
-                print("frame:", i)
-                self.rate.sleep()
+                    for j in range(len(self.args.lift_motor_names)):
+                        self.ros_operator.publish_lift_motor(j, root[f'/lift/motor/{self.args.lift_motor_names[j]}'][i])
+                    print("frame:", i)
+                    self.rate.sleep()
             else:
                 for i in range(max_action_len):
                     if not rclpy.ok():
@@ -359,10 +359,10 @@ class RosOperator(Node):
                                 self.publish_lidar_point_cloud(j, packed_points)
                     for j in range(len(self.args.robot_base_vel_names)):
                         self.publish_robot_base_vel(j, root[f'/robotBase/vel/{self.args.robot_base_vel_names[j]}'][i])
-                for j in range(len(self.args.lift_motor_names)):
-                    self.ros_operator.publish_lift_motor(j, root[f'/lift/motor/{self.args.lift_motor_names[j]}'][i])
-                print("frame:", i)
-                self.rate.sleep()
+                    for j in range(len(self.args.lift_motor_names)):
+                        self.ros_operator.publish_lift_motor(j, root[f'/lift/motor/{self.args.lift_motor_names[j]}'][i])
+                    print("frame:", i)
+                    self.rate.sleep()
 
 
 def get_arguments():
