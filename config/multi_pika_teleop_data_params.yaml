@@ -23,10 +23,10 @@
 
       arm:
         jointState:
-          names: ['masterLeft', 'masterRight', 'puppetLeft', 'puppetLeft']
+          names: ['masterLeft', 'masterRight', 'puppetLeft', 'puppetRight']
           topics: ['/joint_states_gripper_l', '/joint_states_gripper_r', '/joint_states_single_gripper_l', '/joint_states_single_gripper_r']
         endPose:
-          names: ['masterLeft', 'masterRight', 'puppetLeft', 'puppetLeft']
+          names: ['masterLeft', 'masterRight', 'puppetLeft', 'puppetRight']
           topics: ['/piper_IK_l/receive_end_pose_orient', '/piper_IK_r/receive_end_pose_orient', '/piper_FK_l/urdf_end_pose_orient', '/piper_FK_r/urdf_end_pose_orient']
           orients: [true, true, true, true]
 
