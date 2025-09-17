@@ -70,7 +70,3 @@ dataInfo:
     transform:
       parentFrames: []
       childFrames: []
-
-  instruction:
-    text:
-      topics: ['/instruction']
