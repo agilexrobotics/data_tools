@@ -23,11 +23,11 @@
 
       arm:
         jointState:
-          names: ['armJointState']
-          topics: ['/feedback/joint_states']
+          names: ['master', 'puppet']
+          topics: ['/joint_states_gripper', '/joint_states_single_gripper']
         endPose:
-          names: ['armEndPose']
-          topics: ['/feedback/tcp_pose']
+          names: ['master', 'puppet']
+          topics: ['/piper_IK/receive_end_pose_orient', '/piper_FK/urdf_end_pose_orient']
           orients: [true, true]
 
       localization:
@@ -39,16 +39,6 @@
         encoder:
           names: ['pikaSensor', 'pikaGripper']
           topics: ['/sensor/gripper/data', '/gripper/gripper/data']
-
-      # force:
-      #   6dim:
-      #     names: []
-      #     topics: []
-
-      # array:
-      #   float32:
-      #     names: []
-      #     topics: []
 
       # imu:
       #   9axis:
@@ -68,10 +58,7 @@
       #     downSizes: []
 
       # robotBase:
-      #   odometry:
-      #     names: []
-      #     topics: []
-      #   velocity:
+      #   vel:
       #     names: []
       #     topics: []
 

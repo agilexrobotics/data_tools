@@ -47,7 +47,7 @@ def generate_launch_description():
                 }
             ],
             remappings=[
-                ('/data_tools_dataCapture/capture_service', '/data_tools_dataCapture/capture_service'),
+                ('/data_tools_dataCapture/capture_service', '/data_tools_dataCapture/capture_service_l'),
             ],
             output='screen',
             # prefix='gnome-terminal --'
