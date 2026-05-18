@@ -32,8 +32,8 @@
 
       localization:
         pose:
-          names: ['pika_l', 'pika_r','pika_h']
-          topics: ['/pika_pose_l', '/pika_pose_r','/pika_pose_h']
+          names: ['pika_l', 'pika_r']
+          topics: ['/pika_pose_l', '/pika_pose_r']
 
       gripper:
         encoder:
@@ -43,7 +43,7 @@
       imu:
         9axis:
           names: ['helmet_imu']
-          topics: ['/helmet/imu/data']
+          topics: ['/imu_h/data']
 
       # lidar:
       #   pointCloud:

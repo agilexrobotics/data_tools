@@ -1,0 +1,70 @@
+/**:
+  ros__parameters:
+    dataInfo:
+
+      camera:
+        color:
+          names: ['pikaDepthCamera_h', 'pikaFisheyeCamera_h']
+          parentFrames: ['camera_h_link', 'camera_fisheye_h_link']
+          topics: ['/camera_h/color/image_raw', '/camera_fisheye_h/color/image_raw']
+          configTopics: ['/camera_h/color/camera_info', '/camera_fisheye_h/color/camera_info']
+        depth:
+          names: ['pikaDepthCamera_h']
+          parentFrames: ['camera_h_link']
+          topics: ['/camera_h/aligned_depth_to_color/image_raw']
+          configTopics: ['/camera_h/aligned_depth_to_color/camera_info']
+
+        # pointCloud:
+        #   names: []
+        #   parentFrames: []
+        #   topics: []
+        #   configTopics: []
+        #   maxDistances: []
+        #   downSizes: []
+
+      # arm:
+      #   jointState:
+      #     names: []
+      #     topics: []
+      #   endPose:
+      #     names: []
+      #     topics: []
+      #     orients: []
+
+      localization:
+        pose:
+          names: ['pika']
+          topics: ['/pika_pose']
+
+      imu:
+        9axis:
+          names: ['helmet_imu']
+          topics: ['/imu_h/data']
+
+      # lidar:
+      #   pointCloud:
+      #     names: []
+      #     topics: []
+      #     xDistanceUppers: []
+      #     xDistanceLowers: []
+      #     yDistanceUppers: []
+      #     yDistanceLowers: []
+      #     zDistanceUppers: []
+      #     zDistanceLowers: []
+      #     downSizes: []
+
+      # robotBase:
+      #   vel:
+      #     names: []
+      #     topics: []
+
+      # lift:
+      #   motor:
+      #     names: []
+      #     topics: []
+      #     pubTopics: []
+
+      # tf:
+      #   transform:
+      #     parentFrames: []
+      #     childFrames: []
