@@ -33,8 +33,8 @@
 
       localization:
         pose:
-          names: ['pika']
-          topics: ['/pika_pose']
+          names: ['pika_h']
+          topics: ['/pika_pose_h']
 
       imu:
         9axis:
