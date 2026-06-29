@@ -190,8 +190,8 @@ public:
     std::vector<std::string> cameraDepthFrameIds;
     std::vector<std::string> cameraPointCloudFrameIds;
 
-    std::shared_ptr<tf2_ros::TransformListener> tfListener;
     std::unique_ptr<tf2_ros::Buffer> tfBuffer;
+    std::shared_ptr<tf2_ros::TransformListener> tfListener;
 
     std::thread* keyboardInterruptCheckingThread;
     std::thread* monitoringThread;
@@ -390,12 +390,12 @@ public:
             subCameraPointCloudConfigs[i] = create_subscription<sensor_msgs::msg::CameraInfo>(cameraPointCloudConfigTopics[i], 2000, [this, i](const sensor_msgs::msg::CameraInfo::SharedPtr msg) { this->cameraPointCloudConfigHandler(msg, i);});
         }
         for(int i = 0; i < armJointStateNames.size(); i++){
-            unused = system((std::string("mkdir -p ") + armJointStateDirs.at(i)).c_str());
-            subArmJointStates[i] = create_subscription<sensor_msgs::msg::JointState>(armJointStateTopics[i], 2000, [this, i](const sensor_msgs::msg::JointState::SharedPtr msg) { this->armJointStateHandler(msg, i);});
             armJointStateChangeList[i] = false;
             sensor_msgs::msg::JointState msg;
             msg.header.stamp = rclcpp::Time(0);
             armJointStateList[i] = msg;
+            unused = system((std::string("mkdir -p ") + armJointStateDirs.at(i)).c_str());
+            subArmJointStates[i] = create_subscription<sensor_msgs::msg::JointState>(armJointStateTopics[i], 2000, [this, i](const sensor_msgs::msg::JointState::SharedPtr msg) { this->armJointStateHandler(msg, i);});
         }
         for(int i = 0; i < armEndPoseNames.size(); i++){
             unused = system((std::string("mkdir -p ") + armEndPoseDirs.at(i)).c_str());
@@ -582,6 +582,8 @@ public:
         monitoringThread->join();
         delete monitoringThread;
         monitoringThread = nullptr;
+        tfListener.reset();
+        tfBuffer.reset();
         data_msgs::msg::CaptureStatus captureStatus;
         captureStatus.quit = true;
         pubCaptureStatus->publish(captureStatus);
@@ -980,8 +982,6 @@ public:
     }
 
     void cameraColorSaving(const int index){
-        rclcpp::Rate rate(100);
-        bool quit = false;
         while(true){
             if(captureStopMtx.try_lock()){
                 bool stop = captureStop;
@@ -989,25 +989,15 @@ public:
                 if(stop && cameraColorMsgDeques.at(index).size() == 0)
                     break;
             }
-            if(rclcpp::Time(cameraColorMsgDeques.at(index).back().header.stamp).seconds() == 0){
-                quit = true;
-                cameraColorMsgDeques.at(index).pop_back();
-            }
-            if(quit && (cameraColorMsgDeques.at(index).size() == 0 || rclcpp::Time(cameraColorMsgDeques.at(index).back().header.stamp).seconds() - rclcpp::Time(cameraColorMsgDeques.at(index).front().header.stamp).seconds() <= cropTime))
+            sensor_msgs::msg::Image msg = cameraColorMsgDeques.at(index).pop_front();
+            if(rclcpp::Time(msg.header.stamp).seconds() == 0)
                 break;
-            if(quit || rclcpp::Time(cameraColorMsgDeques.at(index).back().header.stamp).seconds() - rclcpp::Time(cameraColorMsgDeques.at(index).front().header.stamp).seconds() > cropTime){
-                sensor_msgs::msg::Image msg = cameraColorMsgDeques.at(index).pop_front();
-                cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-                cv::imwrite(cameraColorDirs.at(index) + "/" + std::to_string(rclcpp::Time(msg.header.stamp).seconds()) + ".jpg", cv_ptr->image);
-            }else{
-                rate.sleep();
-            }
+            cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+            cv::imwrite(cameraColorDirs.at(index) + "/" + std::to_string(rclcpp::Time(msg.header.stamp).seconds()) + ".jpg", cv_ptr->image);
         }
     }
 
     void cameraDepthSaving(const int index){
-        rclcpp::Rate rate(100);
-        bool quit = false;
         while(true){
             if(captureStopMtx.try_lock()){
                 bool stop = captureStop;
@@ -1015,25 +1005,15 @@ public:
                 if(stop && cameraDepthMsgDeques.at(index).size() == 0)
                     break;
             }
-            if(rclcpp::Time(cameraDepthMsgDeques.at(index).back().header.stamp).seconds() == 0){
-                quit = true;
-                cameraDepthMsgDeques.at(index).pop_back();
-            }
-            if(quit && (cameraDepthMsgDeques.at(index).size() == 0 || rclcpp::Time(cameraDepthMsgDeques.at(index).back().header.stamp).seconds() - rclcpp::Time(cameraDepthMsgDeques.at(index).front().header.stamp).seconds() <= cropTime))
+            sensor_msgs::msg::Image msg = cameraDepthMsgDeques.at(index).pop_front();
+            if(rclcpp::Time(msg.header.stamp).seconds() == 0)
                 break;
-            if(quit || rclcpp::Time(cameraDepthMsgDeques.at(index).back().header.stamp).seconds() - rclcpp::Time(cameraDepthMsgDeques.at(index).front().header.stamp).seconds() > cropTime){
-                sensor_msgs::msg::Image msg = cameraDepthMsgDeques.at(index).pop_front();
-                cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_16UC1);
-                cv::imwrite(cameraDepthDirs.at(index) + "/" + std::to_string(rclcpp::Time(msg.header.stamp).seconds()) + ".png", cv_ptr->image);
-            }else{
-                rate.sleep();
-            }
+            cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_16UC1);
+            cv::imwrite(cameraDepthDirs.at(index) + "/" + std::to_string(rclcpp::Time(msg.header.stamp).seconds()) + ".png", cv_ptr->image);
         }
     }
 
     void cameraPointCloudSaving(const int index){
-        rclcpp::Rate rate(100);
-        bool quit = false;
         while(true){
             if(captureStopMtx.try_lock()){
                 bool stop = captureStop;
@@ -1041,41 +1021,32 @@ public:
                 if(stop && cameraPointCloudMsgDeques.at(index).size() == 0)
                     break;
             }
-            if(rclcpp::Time(cameraPointCloudMsgDeques.at(index).back().header.stamp).seconds() == 0){
-                quit = true;
-                cameraPointCloudMsgDeques.at(index).pop_back();
+            sensor_msgs::msg::PointCloud2 msg = cameraPointCloudMsgDeques.at(index).pop_front();
+            if(rclcpp::Time(msg.header.stamp).seconds() == 0)
+                break;
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointCloud(new pcl::PointCloud<pcl::PointXYZRGB>());
+            pcl::fromROSMsg(msg, *pointCloud);
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointCloudNorm(new pcl::PointCloud<pcl::PointXYZRGB>());
+            if(cameraPointCloudMaxDistances.size() != 0 && cameraPointCloudMaxDistances[index] != 0){
+                pcl::PassThrough<pcl::PointXYZRGB> pass;
+                pass.setInputCloud(pointCloud);
+                pass.setFilterFieldName("z");
+                pass.setFilterLimits(0, cameraPointCloudMaxDistances[index]);
+                pass.setFilterLimitsNegative(false);
+                pass.filter(*pointCloudNorm);
+            }else{
+                *pointCloudNorm = *pointCloud;
             }
-            if(quit && (cameraPointCloudMsgDeques.at(index).size() == 0 || rclcpp::Time(cameraPointCloudMsgDeques.at(index).back().header.stamp).seconds() - rclcpp::Time(cameraPointCloudMsgDeques.at(index).front().header.stamp).seconds() <= cropTime))
-                    break;
-            if(quit || rclcpp::Time(cameraPointCloudMsgDeques.at(index).back().header.stamp).seconds() - rclcpp::Time(cameraPointCloudMsgDeques.at(index).front().header.stamp).seconds() > cropTime){
-                sensor_msgs::msg::PointCloud2 msg = cameraPointCloudMsgDeques.at(index).pop_front();
-                pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointCloud(new pcl::PointCloud<pcl::PointXYZRGB>());
-                pcl::fromROSMsg(msg, *pointCloud);
-
-                pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointCloudNorm(new pcl::PointCloud<pcl::PointXYZRGB>());
-                if(cameraPointCloudMaxDistances.size() != 0 && cameraPointCloudMaxDistances[index] != 0){
-                    pcl::PassThrough<pcl::PointXYZRGB> pass;
-                    pass.setInputCloud(pointCloud);
-                    pass.setFilterFieldName("z");
-                    pass.setFilterLimits(0, cameraPointCloudMaxDistances[index]);
-                    pass.setFilterLimitsNegative(false);
-                    pass.filter(*pointCloudNorm);
-                }else{
-                    *pointCloudNorm = *pointCloud;
-                }
-
-                pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointCloudDownSize(new pcl::PointCloud<pcl::PointXYZRGB>());
-                if(cameraPointCloudDownSizes.size() != 0 && cameraPointCloudDownSizes[index] != 0){
-                    pcl::VoxelGrid<pcl::PointXYZRGB> downSizeFilter;
-                    downSizeFilter.setLeafSize(cameraPointCloudDownSizes[index], cameraPointCloudDownSizes[index], cameraPointCloudDownSizes[index]);
-                    downSizeFilter.setInputCloud(pointCloudNorm);
-                    downSizeFilter.filter(*pointCloudDownSize);
-                }else{
-                    *pointCloudDownSize = *pointCloudNorm;
-                }
-
-                pcl::io::savePCDFileBinary(cameraPointCloudDirs.at(index) + "/" + std::to_string(rclcpp::Time(msg.header.stamp).seconds()) + ".pcd", *pointCloudDownSize);
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointCloudDownSize(new pcl::PointCloud<pcl::PointXYZRGB>());
+            if(cameraPointCloudDownSizes.size() != 0 && cameraPointCloudDownSizes[index] != 0){
+                pcl::VoxelGrid<pcl::PointXYZRGB> downSizeFilter;
+                downSizeFilter.setLeafSize(cameraPointCloudDownSizes[index], cameraPointCloudDownSizes[index], cameraPointCloudDownSizes[index]);
+                downSizeFilter.setInputCloud(pointCloudNorm);
+                downSizeFilter.filter(*pointCloudDownSize);
+            }else{
+                *pointCloudDownSize = *pointCloudNorm;
             }
+            pcl::io::savePCDFileBinary(cameraPointCloudDirs.at(index) + "/" + std::to_string(rclcpp::Time(msg.header.stamp).seconds()) + ".pcd", *pointCloudDownSize);
         }
     }
 
@@ -2218,6 +2189,7 @@ class DataCaptureService: public rclcpp::Node{
                         delete exec;
                         spinThread = nullptr;
                         exec = nullptr;
+                        dataCapture = nullptr;
                     }else{
                         std::string datasetDir = this->datasetDir;
                         int episodeIndex = this->episodeIndex;
