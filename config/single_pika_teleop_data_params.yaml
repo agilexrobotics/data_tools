@@ -23,11 +23,11 @@
 
       arm:
         jointState:
-          names: ['armJointState']
-          topics: ['/feedback/joint_states']
+          names: ['master', 'puppet']
+          topics: ['/control/joint_states','/feedback/joint_states']
         endPose:
-          names: ['armEndPose']
-          topics: ['/feedback/tcp_pose']
+          names: ['master', 'puppet']
+          topics: ['/ik_fk_pose','/feedback/tcp_pose']
           orients: [true, true]
 
       localization:

@@ -23,11 +23,11 @@
 
       arm:
         jointState:
-          names: ['leftArmJointState', 'rightArmJointState']
-          topics: ['/left_arm/feedback/joint_states', '/right_arm/feedback/joint_states']
+          names: ['masterLeft', 'masterRight', 'puppetLeft', 'puppetRight']
+          topics: ['/left_arm/control/joint_states','/right_arm/control/joint_states','/left_arm/feedback/joint_states', '/right_arm/feedback/joint_states']
         endPose:
-          names: ['leftArmEndPose', 'rightArmEndPose']
-          topics: ['/left_arm/feedback/tcp_pose', '/right_arm/feedback/tcp_pose']
+          names: ['masterLeft', 'masterRight', 'puppetLeft', 'puppetRight']
+          topics: ['/left_arm/ik_fk_pose','/right_arm/ik_fk_pose','/left_arm/feedback/tcp_pose', '/right_arm/feedback/tcp_pose']
           orients: [true, true, true, true]
 
       localization:
