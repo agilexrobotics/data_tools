@@ -29,33 +29,6 @@ def matrix_to_xyzrpy(matrix):
     return [x, y, z, roll, pitch, yaw]
 
 
-def infer_arm_joint_keep(n, override=0):
-    """Infer how many leading arm joints to keep from a joint-state vector length.
-
-    Slave JSON may include 2 mimic joints + gripper after the arm joints:
-      7-axis: [joint1~6, gripper_joint1, gripper_joint2, gripper] -> 9, keep 6
-      6-axis: [joint1~5, gripper_joint1, gripper_joint2, gripper] -> 8, keep 5
-    Master JSON is arm-only (6 or 5). Classic ALOHA 7 is 6 arm + gripper.
-    """
-    if override and override > 0:
-        return override
-    if n >= 8:
-        return n - 3
-    if n == 7:
-        return 6
-    return n
-
-
-def slice_arm_joints(values, keep):
-    """Return the first `keep` joints, or None if the vector is too short."""
-    arr = np.array(values, dtype=float)
-    if arr.size == 0:
-        return np.zeros(keep, dtype=float)
-    if len(arr) < keep:
-        return None
-    return arr[:keep]
-
-
 def create_transformation_matrix(x, y, z, roll, pitch, yaw):
     transformation_matrix = np.eye(4)
     A = np.cos(yaw)
@@ -286,10 +259,23 @@ class Operator:
             #     data_dict[f'camera/pointCloudIntrinsic/{self.args.cameraPointCloudNames[i]}'] = point_cloud_intrinsic
             #     data_dict[f'camera/pointCloudExtrinsic/{self.args.cameraPointCloudNames[i]}'] = point_cloud_extrinsic
         for i in range(len(self.args.armJointStateNames)):
-            keep = self.args.armJointKeep
+            master_arm_gripper_mm = False
+            if 'master' in self.args.armJointStateNames[i]:
+                with open(self.armJointStateSyncDirs[i], 'r') as lines:
+                    count = 0
+                    for t, line in enumerate(lines):
+                        line = line.replace('\n', '')
+                        with open(os.path.join(self.armJointStateDirs[i], line), 'r') as file:
+                            data = json.load(file)
+                            position = np.array(data['position'])
+                            if abs(position[6]) > 1:
+                                count += 1
+                            if count > 30:
+                                master_arm_gripper_mm = True
+                                break
             arm_not_moving = True
-            first_position = None
             with open(self.armJointStateSyncDirs[i], 'r') as lines:
+                first_position = None
                 for t, line in enumerate(lines):
                     line = line.replace('\n', '')
                     with open(os.path.join(self.armJointStateDirs[i], line), 'r') as file:
@@ -297,29 +283,12 @@ class Operator:
                         position = np.array(data['position'])
                         if first_position is None:
                             first_position = position
-                            keep = infer_arm_joint_keep(len(position), self.args.armJointKeep)
-                            print(self.args.armJointStateNames[i], f"joint dim {len(position)} -> keep {keep}")
-                        if len(position) < keep:
-                            error = True
-                            print(self.args.armJointStateNames[i], f"joint dim {len(position)} < keep {keep}")
-                            break
-                        if not (position[:keep] - first_position[:keep] == 0).all():
+                        if not (position - first_position == 0).all():
                             arm_not_moving = False
                             break
-            if first_position is None:
-                error = True
-                print(self.args.armJointStateNames[i], "no joint state data")
-                continue
             if arm_not_moving:
                 error = True
                 print(self.args.armJointStateNames[i], "arm not moving!!!!!!!!!!")
-            # limit_lower = np.array([-2.6179, 0, -2.967, -1.745, -1.22, -2.09439, 0])
-            # limit_upper = np.array([2.6179, 3.14, 0, 1.745, 1.22, 2.09439, 0.10])
-            limit_lower_full = np.array([-150*math.pi/180, 0, -170*math.pi/180, -105*math.pi/180, -76*math.pi/180, -175*math.pi/180, 0])
-            limit_upper_full = np.array([150*math.pi/180, math.pi, 0, 105*math.pi/180, 76*math.pi/180, 175*math.pi/180, 0.10])
-            n_limit = min(keep, len(limit_lower_full))
-            limit_lower = limit_lower_full[:n_limit]
-            limit_upper = limit_upper_full[:n_limit]
             with open(self.armJointStateSyncDirs[i], 'r') as lines:
                 count = 0
                 for t, line in enumerate(lines):
@@ -333,25 +302,25 @@ class Operator:
                         data_dict[f'timestamp'][count] = time if time < data_dict[f'timestamp'][count] else data_dict[f'timestamp'][count]
                     with open(os.path.join(self.armJointStateDirs[i], line), 'r') as file:
                         data = json.load(file)
-                        position = slice_arm_joints(data['position'], keep)
-                        velocity = slice_arm_joints(data.get('velocity', []), keep)
-                        effort = slice_arm_joints(data.get('effort', []), keep)
-                        if position is None or velocity is None or effort is None:
-                            error = True
-                            print(self.args.armJointStateNames[i], f"joint dim shorter than keep {keep}")
-                            break
-                        out_limit = ((position[:n_limit] - limit_lower) < -0.05).any() or ((limit_upper - position[:n_limit]) < -0.05).any()
+                        # limit_lower = np.array([-2.6179, 0, -2.967, -1.745, -1.22, -2.09439, 0])
+                        # limit_upper = np.array([2.6179, 3.14, 0, 1.745, 1.22, 2.09439, 0.10])
+                        limit_lower = np.array([-150*math.pi/180, 0, -170*math.pi/180, -105*math.pi/180, -76*math.pi/180, -175*math.pi/180, 0])
+                        limit_upper = np.array([150*math.pi/180, math.pi, 0, 105*math.pi/180, 76*math.pi/180, 175*math.pi/180, 0.10])
+                        position = np.array(data['position'])
+                        if master_arm_gripper_mm:
+                            position[6] /= 1000
+                        out_limit = ((position - limit_lower) < -0.05).any() or ((limit_upper - position) < -0.05).any()
                         if out_limit:
                             error = True
                             print(self.args.armJointStateNames[i], position)
-                            min_val, flat_idx = (position[:n_limit] - limit_lower).min(), (position[:n_limit] - limit_lower).argmin()
+                            min_val, flat_idx = (position - limit_lower).min(), (position - limit_lower).argmin()
                             print("lower:", min_val, flat_idx)
-                            min_val, flat_idx = (limit_upper - position[:n_limit]).min(), (limit_upper - position[:n_limit]).argmin()
+                            min_val, flat_idx = (limit_upper - position).min(), (limit_upper - position).argmin()
                             print("upper:", min_val, flat_idx)
                             print("out_limit!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                        data_dict[f'arm/jointStateVelocity/{self.args.armJointStateNames[i]}'].append(velocity)
-                        data_dict[f'arm/jointStateEffort/{self.args.armJointStateNames[i]}'].append(effort)
-                        data_dict[f'arm/jointStatePosition/{self.args.armJointStateNames[i]}'].append(position)
+                        data_dict[f'arm/jointStateVelocity/{self.args.armJointStateNames[i]}'].append(np.array(data['velocity']))
+                        data_dict[f'arm/jointStateEffort/{self.args.armJointStateNames[i]}'].append(np.array(data['effort']))
+                        data_dict[f'arm/jointStatePosition/{self.args.armJointStateNames[i]}'].append(np.array(data['position']))
                     count += 1
                 if size_count == 0:
                     size_count = count
@@ -613,9 +582,6 @@ def get_arguments():
                         default=True, required=False)
     parser.add_argument('--armJointStateNames', action='store', type=str, help='armJointStateNames',
                         default=[], required=False)
-    parser.add_argument('--armJointKeep', action='store', type=int,
-                        help='Number of leading arm joints to keep (0 = auto from vector length)',
-                        default=0, required=False)
     parser.add_argument('--armEndPoseNames', action='store', type=str, help='armEndPoseNames',
                         default=[], required=False)
     parser.add_argument('--localizationPoseNames', action='store', type=str, help='localizationPoseNames',

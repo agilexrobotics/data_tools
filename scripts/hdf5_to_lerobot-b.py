@@ -573,29 +573,6 @@ def load_episode_data(
         except:
             return None, None, None, None, None, None, None
 
-def infer_arm_joint_state_dims(args, hdf5_files):
-    """Fill armJointStateDims from HDF5 shape[-1] so 5-DoF / 6-DoF arms both work."""
-    n_arms = len(args.armJointStateNames)
-    dims = list(args.armJointStateDims) if args.armJointStateDims else [0] * n_arms
-    if len(dims) != n_arms:
-        dims = [0] * n_arms
-    if n_arms == 0:
-        return dims
-    for hdf5_file in hdf5_files:
-        try:
-            with h5py.File(hdf5_file, "r") as episode:
-                for i, name in enumerate(args.armJointStateNames):
-                    key = f"arm/jointStatePosition/{name}"
-                    if key in episode and episode[key].ndim >= 2:
-                        dims[i] = int(episode[key].shape[-1])
-                if all(d > 0 for d in dims):
-                    print(f"armJointStateDims from {hdf5_file}: {dims}")
-                    return dims
-        except OSError:
-            continue
-    return [d if d > 0 else 7 for d in dims]
-
-
 def populate_dataset(
     args,
     dataset: LeRobotDataset,
@@ -659,7 +636,6 @@ def process(
             if os.path.isdir(os.path.join(dataset_dir, f)):
                 hdf5_files.extend(glob.glob(os.path.join(dataset_dir, f, "*.hdf5")))
     hdf5_files = sorted(hdf5_files)
-    args.armJointStateDims = infer_arm_joint_state_dims(args, hdf5_files)
     dataset = create_empty_dataset(
         args,
         dataset_config=dataset_config,
@@ -777,7 +753,7 @@ def get_arguments():
         # args.armJointStateNames = []
         # args.armEndPoseNames = []
         # args.localizationPoseNames = []
-        args.armJointStateDims = []
+        args.armJointStateDims = [7 for _ in range(len(args.armJointStateNames))]
         args.armEndPoseDims = [7 for _ in range(len(args.armEndPoseNames))]
     
     # Parse arm_base_link_in_world based on actual number of arms
